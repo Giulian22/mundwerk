@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Englische Aussprache üben, bis sie sitzt.",
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "stamp": "node tools/version.mjs"
   }
 }

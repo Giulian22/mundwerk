@@ -32,6 +32,7 @@ const env={
   canRec:!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder),
   tts:('speechSynthesis' in window)&&(typeof window.SpeechSynthesisUtterance!=='undefined'),
   micBlocked:false,srBroken:false,denied:0,noSpeech:0,framed:false,lang:'',
+  offline:navigator.onLine===false,offMode:'',
   ios:/iP(hone|od|ad)/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1),
   app:navigator.standalone===true||mq('(display-mode: standalone)')||mq('(display-mode: fullscreen)')
 };
@@ -49,9 +50,14 @@ env.iosNoSR=env.ios&&(env.app||env.iosOther);
 try{if(env.iosNoSR&&localStorage.getItem(PROVEN)===UA) env.iosNoSR=false;}catch(e){}
 /* auto = Mikrofon-Knopf mit Spracherkennung, dict = Diktat über die Tastatur, rec = aufnehmen und selbst vergleichen, self = vorhören und selbst bewerten */
 function srOk(){return !!env.SR&&!env.srBroken&&!env.micBlocked&&!env.iosNoSR;}
+/* Ohne Internet läuft die Spracherkennung meist nicht. Dann prüft die App vorübergehend anders:
+   am Handy über das Diktat der Tastatur (geht oft auch offline), am Laptop im Selbst-Modus. */
+function offline(){return env.offline&&state.check==='auto'&&srOk();}
 function mode(){
-  if(state.check==='self') return (env.canRec&&!env.micBlocked)?'rec':'self';
-  if(state.check==='auto'&&srOk()) return 'auto';
+  let c=state.check;
+  if(offline()) c=env.offMode||((env.ios||/Android/i.test(UA))?'dict':'self');
+  if(c==='self') return (env.canRec&&!env.micBlocked)?'rec':'self';
+  if(c==='auto'&&srOk()) return 'auto';
   return 'dict';
 }
 function srLang(){return env.lang||(state.accent==='us'?'en-US':'en-GB');}
@@ -145,7 +151,9 @@ function pickVoice(){
   const en=all.filter(function(v){return /^en([-_]|$)/i.test(v.lang||'');});
   if(!en.length) return null;
   const exact=en.filter(function(v){return String(v.lang).replace('_','-').toLowerCase()===want;});
-  const pool=exact.length?exact:en;
+  let pool=exact.length?exact:en;
+  /* Offline klingen nur die Stimmen, die auf dem Gerät liegen */
+  if(env.offline){const local=pool.filter(function(v){return v.localService;});if(local.length)pool=local;}
   const bad=/eloquence|albert|bad news|bahh|bells|boing|bubbles|cellos|wobble|good news|jester|organ|superstar|trinoids|whisper|zarvox|fred|junior|kathy|ralph|eddy|flo\b|grandma|grandpa|reed|rocko|sandy|shelley/i;
   const good=/natural|neural|premium|enhanced|siri|google|daniel|kate|serena|arthur|martha|samantha|ava|allison|susan|karen|sonia|libby|ryan|aria|jenny|guy/i;
   let best=pool[0],bs=-99;
@@ -450,6 +458,88 @@ function diagHTML(){
     '<p class="small">Code für Rückfragen: '+esc([env.framed?'E':env.app?'A':'D',env.ios?'i':'-',d.policy,sr,g,d.sig===null?'-':(d.sig?'1':'0')].join(' / '))+'</p></div>';
 }
 
+/* ---------- Offline und Updates ---------- */
+let waiting=null,updLater=false,reloading=false,skipping=false,version='';
+const UPD='mundwerk.updReload';
+function swSetup(){
+  if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol)) return;
+  const sw=navigator.serviceWorker;
+  let had=!!sw.controller;
+  sw.addEventListener('controllerchange',function(){
+    if(!had){had=true;readVersion();return;}
+    try{sessionStorage.removeItem(UPD);}catch(e){}
+    if(!reloading){reloading=true;location.reload();}
+  });
+  sw.register('sw.js',{updateViaCache:'none'}).then(function(reg){
+    const check=function(){reg.update().catch(function(){});};
+    if(reg.waiting&&sw.controller) ready(reg.waiting);
+    reg.addEventListener('updatefound',function(){
+      const w=reg.installing;
+      if(w) w.addEventListener('statechange',function(){if(w.state==='installed'&&sw.controller) ready(w);});
+    });
+    /* Kommt die App aus dem Hintergrund zurück, nach einer neuen Version schauen */
+    document.addEventListener('visibilitychange',function(){if(!document.hidden) check();});
+    setInterval(check,3600000);
+  }).catch(function(){});
+  readVersion();
+  try{if(navigator.storage&&navigator.storage.persist&&!/Firefox\//.test(UA)) navigator.storage.persist().catch(function(){});}catch(e){}
+}
+/* Neue Version liegt bereit: auf der Übersicht sofort starten. Mitten im Üben oder mit ungespeichertem Text erst beim Weg zur Übersicht. */
+function ready(w){waiting=w;applyUpdate(false);}
+function applyUpdate(force){
+  if(!waiting||reloading||skipping) return;
+  const a=document.activeElement,typing=!!a&&(a.tagName==='TEXTAREA'||a.tagName==='INPUT');
+  if(!force&&(view!=='home'||listening||recOn||diagBusy||typing||draft!==state.custom.text)){if(!updLater){updLater=true;softRender();}return;}
+  skipping=true;
+  const w=waiting,fonts=(document.fonts&&document.fonts.ready)||Promise.resolve();
+  /* Erst umschalten, wenn nachgeladene Schriften da sind: Ist beim Umschalten gerade eine Datei unterwegs, bleibt Chrome hängen. */
+  fonts.then(function(){
+    setTimeout(function(){
+      w.postMessage('skip');
+      /* Hängt es trotzdem, löst einmal Neuladen den Knoten. Höchstens zweimal pro Sitzung, damit nichts im Kreis lädt. */
+      setTimeout(function(){
+        if(reloading) return;
+        let n=0;
+        try{n=+sessionStorage.getItem(UPD)||0;sessionStorage.setItem(UPD,String(n+1));}catch(e){n=9;}
+        if(n<2){reloading=true;location.reload();}
+        else{skipping=false;updLater=true;softRender();}
+      },4000);
+    },150);
+  });
+}
+function readVersion(){
+  const c=navigator.serviceWorker&&navigator.serviceWorker.controller;
+  if(!c||!window.MessageChannel) return;
+  const ch=new MessageChannel();
+  ch.port1.onmessage=function(e){version=String(e.data||'');softRender();};
+  c.postMessage('version',[ch.port2]);
+}
+/* Auf den Home-Bildschirm: Anleitung passend zum Gerät. iPhone: als Lesezeichen, denn in der Web-App fehlt die Spracherkennung. */
+function installHelp(){
+  if(env.ios) return env.iosOther?'Das geht nur in Safari. Öffne Mundwerk dort.':'Teilen (bei neueren iPhones erst auf „…“ tippen), dann „Zum Home-Bildschirm“. Schalte dort „Als Web-App öffnen“ aus, sonst geht das Mikrofon nicht.';
+  if(/Android/i.test(UA)) return 'Chrome-Menü ⋮ oben rechts, dann „Zum Startbildschirm hinzufügen“ oder „App installieren“.';
+  if(/Edg\//.test(UA)) return 'Menü … oben rechts, dann „Apps“ und „Diese Website als App installieren“.';
+  if(/Safari\//.test(UA)&&!/Chrome\//.test(UA)) return 'In Safari: Menü „Ablage“, dann „Zum Dock hinzufügen“.';
+  return 'Rechts in der Adressleiste auf das Symbol „Installieren“ klicken. Dann startet Mundwerk wie ein eigenes Programm.';
+}
+function versionText(){
+  const v=/^(\d{4})-(\d\d)-(\d\d)-(\w+)$/.exec(version);
+  return v?'Version vom '+v[3]+'.'+v[2]+'.'+v[1]+' ('+v[4].slice(0,4)+'), startet auch ohne Internet.':'';
+}
+window.addEventListener('online',function(){env.offline=false;env.offMode='';softRender();});
+window.addEventListener('offline',function(){env.offline=true;softRender();});
+function updateHTML(){
+  if(!updLater||!waiting) return '';
+  return '<div class="note"><p><b>Neue Version bereit.</b> '+(draft!==state.custom.text?'Übernimm erst deinen Text, dann neu laden.':'Klappt das Neuladen nicht, schließ Mundwerk einmal ganz und öffne es neu.')+'</p><div class="btns"><button class="btn" data-act="update">Jetzt neu laden</button></div></div>';
+}
+function offlineHTML(full){
+  if(!offline()) return '';
+  const m=mode(),cm=m==='auto'?'auto':m==='dict'?'dict':'self';
+  const seg='<span class="seg" role="group" aria-label="Prüfung ohne Internet"><button data-act="offmode" data-v="dict" aria-pressed="'+(cm==='dict')+'">Diktat</button><button data-act="offmode" data-v="self" aria-pressed="'+(cm==='self')+'">Selbst</button><button data-act="offmode" data-v="auto" aria-pressed="'+(cm==='auto')+'">Mikro</button></span>';
+  if(!full) return '<div class="note"><p><b>Offline.</b> '+(cm==='auto'?'Ohne Internet hört das Mikro nur auf manchen Geräten.':cm==='dict'?'Geprüft wird über das Diktat deiner Tastatur.':'Anhören, nachsprechen, selbst vergleichen.')+'</p><div class="btns">'+seg+'</div></div>';
+  return '<div class="note"><p><b>Du bist offline.</b> Die Spracherkennung braucht meist Internet. Bis du wieder online bist, prüft die App anders: über das Diktat deiner Tastatur (klappt auf vielen Handys auch ohne Internet) oder im Selbst-Modus (anhören, nachsprechen, selbst vergleichen). Danach ist der Mikrofon-Knopf von allein zurück.</p><div class="btns">'+seg+'</div></div>';
+}
+
 /* ---------- Ansichten ---------- */
 function modeNote(){
   let h='';
@@ -496,7 +586,7 @@ function homeHTML(){
   h+='<section class="total"><div class="total-line"><span class="total-num">'+ok+' von '+tot+' sitzen</span>'+
     '<span class="seg" role="group" aria-label="Akzent"><button data-act="acc" data-v="gb" aria-pressed="'+(!us)+'">Britisch</button><button data-act="acc" data-v="us" aria-pressed="'+us+'">Amerikanisch</button></span></div>'+
     '<div class="meter"><i style="width:'+(tot?Math.round(ok/tot*1000)/10:0)+'%"></i></div></section>';
-  h+=modeNote();
+  h+=updateHTML()+offlineHTML(true)+modeNote();
   if(weak.length) h+='<section class="group"><h2>Offen vom letzten Mal</h2><button class="row" data-act="weak"><span class="sym" style="color:var(--red)" aria-hidden="true">f</span><span><span class="row-name">Schwächen</span><span class="row-sub">'+weak.length+(weak.length===1?' Eintrag, der':' Einträge, die')+' zuletzt daneben '+(weak.length===1?'ging':'gingen')+'</span></span><span class="row-count"></span></button></section>';
   GROUPS.forEach(function(g){
     const ps=packs.filter(function(p){return p.g===g[0];});
@@ -514,12 +604,13 @@ function homeHTML(){
     (srOk()?'<button data-act="check" data-v="auto" aria-pressed="'+(cm==='auto')+'">Mikro</button>':'')+
     '<button data-act="check" data-v="dict" aria-pressed="'+(cm==='dict')+'">Diktat</button><button data-act="check" data-v="self" aria-pressed="'+(cm==='self')+'">Selbst</button></span></div>';
   h+='<div class="set"><span class="set-label">Mikrofon-Test<span class="set-help">Zeigt, ob und wie die App dich hören kann.</span></span><button class="btn quiet" data-act="diag"'+(diagBusy?' disabled':'')+'>Testen</button></div>';
+  if(!env.app&&!env.framed) h+='<div class="set"><span class="set-label">Auf den Home-Bildschirm<span class="set-help">'+esc(installHelp())+'</span></span></div>';
   if(env.tts) h+='<div class="set"><span class="set-label">Vorsprechen<span class="set-help">Jedes neue Wort wird einmal vorgelesen.</span></span><span class="seg" role="group" aria-label="Vorsprechen"><button data-act="auto" data-v="on" aria-pressed="'+state.auto+'">An</button><button data-act="auto" data-v="off" aria-pressed="'+(!state.auto)+'">Aus</button></span></div>';
   h+='<div class="set"><span class="set-label">Fortschritt<span class="set-help">'+(confirmReset?'Wirklich alle Haken löschen?':'Alle Haken löschen und von vorn anfangen.')+'</span></span>'+
     (confirmReset?'<span class="btns" style="margin:0;flex-wrap:nowrap"><button class="btn danger" data-act="reset-yes">Löschen</button><button class="btn quiet" data-act="reset-no">Behalten</button></span>':'<button class="btn quiet" data-act="reset">Zurücksetzen</button>')+'</div>';
   h+='</div></section>';
   h+='<footer class="foot">'+(m==='auto'||m==='dict'?'<p>Die Spracherkennung ist streng, aber kein perfekter Richter. Verwechslungen wie think und sink hört sie gut, feine Klangunterschiede nicht. Versteht sie ein Wort dauerhaft falsch, obwohl es für dich wie die Vorlage klingt, geh weiter.</p>':'<p>Bei der Selbstbewertung gilt: lieber einmal zu streng.</p>')+
-    '<p>Dein Fortschritt bleibt auf diesem Gerät. Keine Werbung, kein Tracking.</p></footer>';
+    '<p>Dein Fortschritt bleibt auf diesem Gerät. Keine Werbung, kein Tracking.</p>'+(version?'<p>'+esc(versionText())+'</p>':'')+'</footer>';
   return h;
 }
 function sentHTML(it,marks){
@@ -569,6 +660,7 @@ function practiceHTML(){
   h+='<div class="ticks" role="img" aria-label="'+s+' von '+it.need+' Treffern am Stück">';
   for(let k=0;k<it.need;k++) h+='<span class="tick'+(k<s?' on':'')+(last&&last.v==='hit'&&k===s-1?' new':'')+'">'+ICON.check+'</span>';
   h+='<span class="ticks-label">'+(done?'Sitzt':(it.need===3?'Drei':'Zwei')+' Treffer am Stück')+'</span></div>';
+  h+=offlineHTML(false);
   if(m==='rec'){
     if(sess.take&&sess.take.id===it.id) h+='<div class="rate"><div class="listen" style="margin-top:0"><button class="lbtn" data-act="mine">'+ICON.spk+'Aufnahme</button><button class="lbtn" data-act="say">'+ICON.spk+'Vorlage</button></div><p style="margin-top:12px">Klingt deine Aufnahme wie die Vorlage?</p><div class="btns"><button class="btn solid" data-act="yes">Klingt gleich</button><button class="btn quiet" data-act="no">Klingt anders</button></div></div>';
     else if(!last) h+='<div class="rate"><p>Nimm dich auf. Danach hörst du dich neben der Vorlage und entscheidest.</p></div>';
@@ -638,7 +730,7 @@ document.addEventListener('click',function(e){
   const a=b.dataset.act,v=b.dataset.v,it=cur();
   if(a==='open') openPack(b.dataset.id);
   else if(a==='weak') startSession('Schwächen',weakItems());
-  else if(a==='home'){stopAll();view='home';sess=null;render();window.scrollTo(0,0);}
+  else if(a==='home'){stopAll();view='home';sess=null;render();window.scrollTo(0,0);applyUpdate(false);}
   else if(a==='say'){if(it)speak(it.text,false);}
   else if(a==='slow'){if(it)speak(it.text,true);}
   else if(a==='mic') micAct();
@@ -650,7 +742,9 @@ document.addEventListener('click',function(e){
   else if(a==='again'){startSession(sess.title,sess.queue.filter(function(x){return !isDone(x);}));}
   else if(a==='again-all'){startSession(sess.title,sess.queue.slice());}
   else if(a==='acc'){state.accent=v==='us'?'us':'gb';persist();render();}
-  else if(a==='check'){stopAll();state.check=(v==='self'||v==='dict')?v:'auto';persist();render();}
+  else if(a==='check'){stopAll();state.check=(v==='self'||v==='dict')?v:'auto';env.offMode=state.check==='auto'?'auto':'';persist();render();}
+  else if(a==='offmode'){stopAll();env.offMode=(v==='self'||v==='dict')?v:'auto';render();}
+  else if(a==='update') applyUpdate(true);
   else if(a==='diag') runDiag();
   else if(a==='auto'){state.auto=v==='on';persist();render();}
   else if(a==='reset'){confirmReset=true;render();}
@@ -697,4 +791,5 @@ window.addEventListener('storage',function(e){
 loadLocal();
 draft=state.custom.text;
 render();
-if(/mwtest/.test(location.hash)) window.__mw={mouth:mouth,compare:compare,judge:judge,PACKS:PACKS,allPacks:allPacks,env:env,splitSentences:splitSentences,getState:function(){return state;}};
+swSetup();
+if(/mwtest/.test(location.hash)) window.__mw={mouth:mouth,compare:compare,judge:judge,PACKS:PACKS,allPacks:allPacks,env:env,splitSentences:splitSentences,getState:function(){return state;},upd:function(){return {waiting:!!waiting,later:updLater,reloading:reloading,view:view,draftSaved:draft===state.custom.text};}};

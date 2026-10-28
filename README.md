@@ -14,14 +14,28 @@ Du sprichst ein Wort, die Spracherkennung schreibt mit. Drei Treffer am Stück (
 | `css/fonts.css`, `fonts/` | Schriften, liegen im Projekt |
 | `js/data.js` | Alle Pakete, Wörter, Sätze, Lautschrift und Tipps |
 | `js/core.js` | Vergleich mit dem Gesprochenen, Spielstand |
-| `js/app.js` | Bildschirm, Mikrofon, Vorlesen |
-| `test/` | Automatische Prüfung der Inhalte (`npm test`) |
+| `js/app.js` | Bildschirm, Mikrofon, Vorlesen, Offline und Updates |
+| `sw.js` | Service Worker: speichert alles für den Start ohne Internet |
+| `manifest.webmanifest`, `icons/` | Damit Mundwerk wie eine App auf den Home-Bildschirm kann |
+| `test/` | Automatische Prüfung (`npm test`) |
+| `tools/version.mjs` | Neue Version in `sw.js` eintragen (`npm run stamp`) |
 
 ## Mikrofon
 
 - Chrome und Edge (Windows, Android, Mac) und Safari (iPhone, Mac): eigener Mikrofon-Knopf mit der eingebauten Spracherkennung des Browsers.
 - iPhone: Die Spracherkennung läuft nur direkt in Safari, nicht als Homescreen-App. Die App erkennt das und schickt dich zu Safari.
 - Notlösungen: Diktat über die Tastatur, Aufnehmen und selbst vergleichen, Mikrofon-Test.
+
+## Auf den Home-Bildschirm
+
+- **iPhone (Safari):** Teilen (bei neueren iPhones erst auf „…“ tippen), dann „Zum Home-Bildschirm“. Schalte „Als Web-App öffnen“ **aus**, dann startet Mundwerk in Safari und das Mikrofon geht. Mit eingeschaltetem Schalter startet Mundwerk ohne Browserleiste, aber Apple gibt der App dort keine Spracherkennung (dann nur Diktat oder Selbst-Modus).
+- **Android (Chrome):** Menü ⋮ oben rechts, dann „Zum Startbildschirm hinzufügen“ oder „App installieren“.
+- **Windows (Chrome oder Edge):** Rechts in der Adressleiste auf „Installieren“ klicken.
+
+## Offline und Updates
+
+Ein Service Worker (`sw.js`) speichert App, Inhalte und Schriften. Mundwerk startet deshalb auch ohne Internet. Die Spracherkennung braucht meist trotzdem Internet: Offline wechselt die App von selbst auf Diktat (Handy) oder Selbst-Modus (Laptop).
+Nach jeder Änderung an App-Dateien `npm run stamp` ausführen. Das schreibt eine neue Version in `sw.js`, und nur dann lädt der Browser das Update. `npm test` meldet, wenn das vergessen wurde.
 
 ## Datenschutz
 
