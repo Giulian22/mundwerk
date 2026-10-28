@@ -1,7 +1,7 @@
 /* Prüft das Zusammenführen zweier Spielstände (Handy und Laptop). Start: npm test */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {blank,clean,merge,syncPart} from '../js/core.js';
+import {blank,clean,merge,syncPart,dayStats,bump,dateKey} from '../js/core.js';
 
 function st(o){return clean(Object.assign(blank(),o));}
 
@@ -39,12 +39,14 @@ test('Akzent und eigener Text kommen vom zuletzt geänderten Stand, Prüfart und
   assert.equal(m.check,'dict');
   assert.equal(m.auto,false);
   const p=syncPart(m);
-  assert.ok(!('check' in p)&&!('auto' in p),'Prüfart und Vorsprechen werden nicht übertragen');
+  assert.ok(!('check' in p)&&!('auto' in p)&&!('theme' in p)&&!('sound' in p),'Prüfart, Vorsprechen, Aussehen und Töne werden nicht übertragen');
 });
 
 test('Alte Spielstände ohne Zeitstempel werden übernommen', function(){
   const alt=clean({v:1,accent:'us',auto:true,check:'auto',items:{a:{s:2,a:2,h:2,t:70}},custom:{text:'Old text.'},ts:80});
-  assert.deepEqual(alt.stamps,{accent:80,text:80});
+  assert.deepEqual(alt.stamps,{accent:80,text:80,goal:0});
+  assert.equal(alt.goal,20);
+  assert.deepEqual(alt.days,{});
   const m=merge(st({}),alt);
   assert.equal(m.accent,'us');
   assert.equal(m.custom.text,'Old text.');
@@ -64,4 +66,88 @@ test('Kaputte Daten aus dem Netz richten nichts an', function(){
   assert.deepEqual(m.items.x,{s:1,a:1,h:1,t:5});
   assert.deepEqual(m.items.y,{s:3,a:0,h:0,t:9});
   assert.equal(m.accent,'gb');
+});
+
+/* ---------- Tagesziel und Serie ---------- */
+const DAY=86400000;
+function at(y,m,d,h){return new Date(y,m-1,d,h||12).getTime();}
+
+test('Versuche pro Tag: jedes Gerät zählt für sich, zusammen ergibt es die Summe', function(){
+  const now=at(2026,10,28);
+  const handy=st({}),laptop=st({});
+  for(let i=0;i<7;i++) bump(handy,'handy',now);
+  for(let i=0;i<5;i++) bump(laptop,'laptop',now+1000);
+  const m=merge(handy,laptop);
+  assert.equal(dayStats(m,now).today,12);
+  /* Nochmal zusammenführen zählt nichts doppelt */
+  assert.equal(dayStats(merge(m,laptop),now).today,12);
+  assert.equal(dayStats(merge(laptop,merge(m,handy)),now).today,12);
+  /* Das Handy übt weiter: sein neuester Stand gewinnt */
+  bump(handy,'handy',now+5000);
+  assert.equal(dayStats(merge(m,handy),now).today,13);
+  assert.deepEqual(syncPart(merge(m,handy)),syncPart(merge(handy,m)));
+});
+
+test('Serie: Tage am Stück mit geschafftem Tagesziel, heute darf noch offen sein', function(){
+  const s=st({goal:10});
+  const today=at(2026,10,28);
+  for(const back of [1,2,3]) for(let i=0;i<10;i++) bump(s,'a',today-back*DAY);
+  for(let i=0;i<9;i++) bump(s,'a',today-5*DAY);
+  let d=dayStats(s,today);
+  assert.deepEqual(d,{today:0,goal:10,done:false,streak:3});
+  for(let i=0;i<9;i++) bump(s,'a',today);
+  assert.equal(dayStats(s,today).done,false);
+  bump(s,'a',today);
+  d=dayStats(s,today);
+  assert.deepEqual(d,{today:10,goal:10,done:true,streak:4});
+  /* Ein ausgefallener Tag beendet die Serie */
+  assert.equal(dayStats(s,today+2*DAY).streak,0);
+});
+
+test('Serie über einen Monatswechsel und die Zeitumstellung hinweg', function(){
+  const s=st({goal:10});
+  /* 25.10.2026: Ende der Sommerzeit in Deutschland */
+  for(const day of [[2026,10,30],[2026,10,31],[2026,11,1]]) for(let i=0;i<10;i++) bump(s,'a',at(day[0],day[1],day[2],0)+60000);
+  for(const day of [[2026,10,24],[2026,10,25],[2026,10,26]]) for(let i=0;i<10;i++) bump(s,'b',at(day[0],day[1],day[2],23));
+  assert.equal(dayStats(s,at(2026,11,1,23)).streak,3);
+  assert.equal(dayStats(s,at(2026,10,26,23,59)).streak,3);
+  assert.equal(dateKey(at(2026,11,1,0)+60000),'2026-11-01');
+});
+
+test('Ein geschafftes Tagesziel bleibt geschafft, auch wenn das Ziel später steigt', function(){
+  const s=st({goal:10});
+  const y=at(2026,10,27);
+  for(let i=0;i<12;i++) bump(s,'a',y);
+  s.goal=40;
+  assert.equal(dayStats(s,at(2026,10,28)).streak,1);
+});
+
+test('Das Tagesziel kommt vom zuletzt geänderten Stand', function(){
+  const handy=st({goal:40,stamps:{goal:500}}),laptop=st({goal:10,stamps:{goal:300}});
+  assert.equal(merge(handy,laptop).goal,40);
+  assert.equal(merge(laptop,handy).goal,40);
+  assert.equal(merge(st({}),st({goal:10,stamps:{goal:1}})).goal,10);
+  assert.equal(clean({goal:15}).goal,20,'nur 10, 20 oder 40');
+});
+
+test('Zurücksetzen löscht auch die Tage von vorher', function(){
+  const now=at(2026,10,28);
+  const laptop=st({});
+  for(let i=0;i<20;i++) bump(laptop,'laptop',now-DAY);
+  const handy=st({resetAt:now-1000});
+  const m=merge(laptop,handy);
+  assert.deepEqual(m.days,{});
+  assert.equal(dayStats(m,now).streak,0);
+});
+
+test('Kaputte oder zu viele Tage-Einträge richten nichts an', function(){
+  const days={'2026-10-28~ok':{n:'4',t:'9',r:true},'kaputt':{n:5,t:5},'2026-10-28~BÖSE':{n:5,t:5},'2026-10-27~x':'nein'};
+  const c=clean({days:days});
+  assert.deepEqual(c.days,{'2026-10-28~ok':{n:4,t:9,r:1}});
+  const many={};
+  for(let i=0;i<1200;i++){const d=new Date(2020,0,1+i);many[dateKey(d.getTime())+'~a']={n:1,t:i+1,r:0};}
+  const k=Object.keys(clean({days:many}).days);
+  assert.equal(k.length,1000);
+  assert.equal(k[k.length-1],dateKey(new Date(2020,0,1200).getTime())+'~a','die neuesten bleiben');
+  assert.equal(Object.keys(merge({days:many},{days:{}}).days).length,1000);
 });

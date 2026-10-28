@@ -120,9 +120,13 @@ export function splitSentences(text){
 
 /* ---------- Spielstand ----------
    items: pro Wort oder Satz s = Treffer am Stück, a = Versuche, h = Treffer, t = Zeitpunkt des letzten Versuchs.
-   Für den Abgleich zwischen Geräten: stamps sagt, wann Akzent und eigener Text zuletzt geändert wurden,
+   days: Versuche pro Tag und Gerät, Schlüssel „2026-10-28~gerät“: n = Versuche, t = letzter Versuch, r = Tagesziel geschafft.
+   Jedes Gerät zählt in seinem eigenen Eintrag, damit beim Zusammenführen nichts doppelt zählt.
+   Für den Abgleich zwischen Geräten: stamps sagt, wann Akzent, eigener Text und Tagesziel zuletzt geändert wurden,
    resetAt, wann zuletzt alles zurückgesetzt wurde. */
-export function blank(){return {v:2,accent:'gb',auto:true,check:'auto',theme:'dark',items:{},custom:{text:''},ts:0,resetAt:0,stamps:{accent:0,text:0}};}
+export const GOALS=[10,20,40];
+const DAY=/^\d{4}-\d\d-\d\d~[a-z0-9]{1,16}$/,MAXDAYS=1000;
+export function blank(){return {v:2,accent:'gb',auto:true,check:'auto',theme:'dark',sound:true,goal:20,items:{},days:{},custom:{text:''},ts:0,resetAt:0,stamps:{accent:0,text:0,goal:0}};}
 export function clean(o){
   const out=blank();
   if(!o||typeof o!=='object') return out;
@@ -130,6 +134,8 @@ export function clean(o){
   out.auto=o.auto!==false;
   out.check=(o.check==='self'||o.check==='dict')?o.check:'auto';
   out.theme=(o.theme==='light'||o.theme==='auto')?o.theme:'dark';
+  out.sound=o.sound!==false;
+  out.goal=GOALS.indexOf(o.goal)>=0?o.goal:20;
   out.ts=Number(o.ts)||0;
   out.resetAt=Number(o.resetAt)||0;
   if(o.items&&typeof o.items==='object'){
@@ -138,10 +144,16 @@ export function clean(o){
       if(r&&typeof r==='object'&&(Number(r.t)||0)>out.resetAt) out.items[k]={s:Math.max(0,r.s|0),a:Math.max(0,r.a|0),h:Math.max(0,r.h|0),t:Number(r.t)||0};
     });
   }
+  if(o.days&&typeof o.days==='object'){
+    Object.keys(o.days).filter(function(k){return DAY.test(k);}).sort().slice(-MAXDAYS).forEach(function(k){
+      const r=o.days[k];
+      if(r&&typeof r==='object'&&(Number(r.t)||0)>out.resetAt) out.days[k]={n:Math.max(0,r.n|0),t:Number(r.t)||0,r:r.r?1:0};
+    });
+  }
   if(o.custom&&typeof o.custom==='object') out.custom.text=String(o.custom.text||'').slice(0,8000);
-  /* Ältere Spielstände ohne stamps: Zeitpunkt der letzten Änderung überhaupt */
+  /* Ältere Spielstände ohne stamps: Zeitpunkt der letzten Änderung überhaupt. Das Tagesziel gab es damals noch nicht. */
   const st=(o.stamps&&typeof o.stamps==='object')?o.stamps:{};
-  out.stamps={accent:Number(st.accent)||out.ts,text:Number(st.text)||out.ts};
+  out.stamps={accent:Number(st.accent)||out.ts,text:Number(st.text)||out.ts,goal:Number(st.goal)||0};
   return out;
 }
 /* Gleich alt: der Eintrag mit mehr Versuchen gewinnt, damit beide Geräte dasselbe Ergebnis bekommen */
@@ -150,9 +162,14 @@ function newer(x,y){
   if(y.a!==x.a) return y.a>x.a?y:x;
   return y.s>x.s?y:x;
 }
+function newerDay(x,y){
+  if(y.t!==x.t) return y.t>x.t?y:x;
+  if(y.n!==x.n) return y.n>x.n?y:x;
+  return y.r>x.r?y:x;
+}
 /* Zwei Spielstände zusammenführen (zum Beispiel Handy und Laptop): pro Eintrag gewinnt der neueste Versuch.
-   Akzent und eigener Text kommen von dem Stand, der sie zuletzt geändert hat. Zurücksetzen löscht alles, was davor geübt wurde.
-   Prüfart, Vorsprechen und Aussehen passen nur zum jeweiligen Gerät und bleiben wie in a. */
+   Akzent, eigener Text und Tagesziel kommen von dem Stand, der sie zuletzt geändert hat. Zurücksetzen löscht alles, was davor geübt wurde.
+   Prüfart, Vorsprechen, Aussehen und Töne passen nur zum jeweiligen Gerät und bleiben wie in a. */
 export function merge(a,b){
   a=clean(a);b=clean(b);
   const out=clean(a),ids={};
@@ -160,6 +177,7 @@ export function merge(a,b){
   out.resetAt=Math.max(a.resetAt,b.resetAt);
   if(b.stamps.accent>a.stamps.accent){out.accent=b.accent;out.stamps.accent=b.stamps.accent;}
   if(b.stamps.text>a.stamps.text){out.custom.text=b.custom.text;out.stamps.text=b.stamps.text;}
+  if(b.stamps.goal>a.stamps.goal){out.goal=b.goal;out.stamps.goal=b.stamps.goal;}
   Object.keys(a.items).forEach(function(k){ids[k]=1;});
   Object.keys(b.items).forEach(function(k){ids[k]=1;});
   out.items={};
@@ -167,10 +185,44 @@ export function merge(a,b){
     const x=a.items[k],y=b.items[k],r=!x?y:!y?x:newer(x,y);
     if(r.t>out.resetAt) out.items[k]=Object.assign({},r);
   });
+  const days={};
+  Object.keys(a.days).forEach(function(k){days[k]=1;});
+  Object.keys(b.days).forEach(function(k){days[k]=1;});
+  out.days={};
+  Object.keys(days).sort().slice(-MAXDAYS).forEach(function(k){
+    const x=a.days[k],y=b.days[k],r=!x?y:!y?x:newerDay(x,y);
+    if(r.t>out.resetAt) out.days[k]=Object.assign({},r);
+  });
   return out;
 }
-/* Was auf andere Geräte übertragen wird: alles außer Prüfart, Vorsprechen und Aussehen */
+/* Was auf andere Geräte übertragen wird: alles außer Prüfart, Vorsprechen, Aussehen und Tönen */
 export function syncPart(s){
   s=clean(s);
-  return {v:s.v,accent:s.accent,items:s.items,custom:{text:s.custom.text},ts:s.ts,resetAt:s.resetAt,stamps:s.stamps};
+  return {v:s.v,accent:s.accent,goal:s.goal,items:s.items,days:s.days,custom:{text:s.custom.text},ts:s.ts,resetAt:s.resetAt,stamps:s.stamps};
+}
+
+/* ---------- Tagesziel und Serie ----------
+   Ein Tag zählt für die Serie, wenn an dem Tag das Tagesziel geschafft wurde (über alle Geräte zusammen).
+   Ist heute noch offen, zählt die Serie bis gestern: Sie reißt erst, wenn ein ganzer Tag ausfällt. */
+export function dateKey(t){
+  const d=new Date(t);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+export function dayStats(s,now){
+  const tot={},hit={};
+  Object.keys(s.days).forEach(function(k){const d=k.slice(0,10),r=s.days[k];tot[d]=(tot[d]||0)+r.n;if(r.r)hit[d]=1;});
+  const ok=function(d){return !!hit[d]||(tot[d]||0)>=s.goal;};
+  const today=dateKey(now),d=new Date(now);
+  const done=ok(today);
+  if(!done) d.setDate(d.getDate()-1);
+  let streak=0;
+  while(streak<MAXDAYS&&ok(dateKey(d.getTime()))){streak++;d.setDate(d.getDate()-1);}
+  return {today:tot[today]||0,goal:s.goal,done:done,streak:streak};
+}
+/* Einen Versuch zählen. Ist das Tagesziel damit erreicht, merkt sich der Eintrag das, auch wenn das Ziel später steigt. */
+export function bump(s,dev,now){
+  const k=dateKey(now)+'~'+dev,r=s.days[k]||(s.days[k]={n:0,t:0,r:0});
+  r.n++;r.t=now;
+  if(dayStats(s,now).today>=s.goal) r.r=1;
+  return r;
 }
