@@ -15,6 +15,8 @@ const ICON={
   left:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>',
   right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>',
   check:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>',
+  slow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
   kbd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17.5 10h.01M8 14h8"/></svg>'
 };
 
@@ -468,6 +470,16 @@ function diagHTML(){
     '<p class="small">Code für Rückfragen: '+esc([env.framed?'E':env.app?'A':'D',env.ios?'i':'-',d.policy,sr,g,d.sig===null?'-':(d.sig?'1':'0')].join(' / '))+'</p></div>';
 }
 
+/* ---------- Aussehen: dunkel (Standard), hell oder wie das Gerät eingestellt ist. Gilt nur für dieses Gerät. ---------- */
+function applyTheme(){
+  const t=state.theme==='light'||state.theme==='auto'?state.theme:'dark';
+  document.documentElement.dataset.theme=t;
+  const light=t==='light'||(t==='auto'&&mq('(prefers-color-scheme: light)'));
+  const m=document.querySelector('meta[name="theme-color"]');
+  if(m) m.setAttribute('content',light?'#F3F4EE':'#09090B');
+}
+try{window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',function(){if(state.theme==='auto')applyTheme();});}catch(e){}
+
 /* ---------- Synchronisierung zwischen Geräten (nur nach Anmeldung mit Google) ---------- */
 const SYNC='mundwerk.sync';
 let sync=null,syncLoad=false,syncUser=null,syncStat='',syncCode='',syncAt=0,syncTap=false;
@@ -652,35 +664,61 @@ function ownHTML(){
     '<textarea id="own" lang="en" spellcheck="false" aria-label="Eigener englischer Text" placeholder="Today we are going to talk about …"></textarea><div class="btns">'+
     '<button class="btn solid" data-act="own-save">Sätze übernehmen</button></div><p class="own-msg" aria-live="polite">'+esc(ownMsg)+'</p></div>';
 }
+/* Wo es weitergeht: das Paket, in dem zuletzt geübt wurde und noch etwas offen ist, sonst das erste offene */
+function nextPack(){
+  let best=null,bt=-1;
+  allPacks().forEach(function(p){
+    const open=p.items.filter(function(it){return !isDone(it);}).length;
+    if(!open) return;
+    let t=0;
+    p.items.forEach(function(it){const r=state.items[it.id];if(r&&r.t>t)t=r.t;});
+    if(t>bt){bt=t;best={p:p,open:open};}
+  });
+  return best;
+}
+function rowHTML(act,id,sym,name,sub,count,share,cls){
+  return '<button class="row'+(cls?' '+cls:'')+'" data-act="'+act+'"'+(id?' data-id="'+esc(id)+'"':'')+'><span class="sym" lang="en" aria-hidden="true">'+esc(sym)+'</span>'+
+    '<span class="row-txt"><span class="row-name">'+esc(name)+'</span><span class="row-sub">'+esc(sub)+'</span></span>'+
+    (count?'<span class="row-count">'+count+'</span>':'')+(share>0?'<i class="row-line" style="width:'+Math.round(share*1000)/10+'%"></i>':'')+'</button>';
+}
+const two=function(n,tot){return tot>=10&&n<10?'0'+n:String(n);};
 function homeHTML(){
-  const packs=allPacks(),weak=weakItems(),us=state.accent==='us',m=mode();
+  const packs=allPacks(),weak=weakItems(),us=state.accent==='us',m=mode(),next=nextPack();
   let tot=0,ok=0;
   packs.forEach(function(p){p.items.forEach(function(it){tot++;if(isDone(it))ok++;});});
-  const how=m==='auto'?'Du sprichst, die Spracherkennung schreibt mit, was sie versteht.':m==='dict'?'Du sprichst über das Mikrofon deiner Tastatur, und die App prüft, was ankommt.':m==='rec'?'Du hörst die Vorlage, nimmst dich auf und vergleichst.':'Du hörst die Vorlage, sprichst nach und bewertest dich selbst.';
-  let h='<header class="mast"><h1>Mundwerk</h1><span class="said">/ˈmʊntvɛʁk/</span><p>Englisch aussprechen, bis es sitzt. '+how+' Drei Treffer am Stück, und ein Wort gilt als sicher. Ein Fehler, und die Haken sind wieder weg.</p></header>';
-  h+='<section class="total"><div class="total-line"><span class="total-num">'+ok+' von '+tot+' sitzen</span>'+
-    '<span class="seg" role="group" aria-label="Akzent"><button data-act="acc" data-v="gb" aria-pressed="'+(!us)+'">Britisch</button><button data-act="acc" data-v="us" aria-pressed="'+us+'">Amerikanisch</button></span></div>'+
-    '<div class="meter"><i style="width:'+(tot?Math.round(ok/tot*1000)/10:0)+'%"></i></div></section>';
+  const how=m==='auto'?'Du sprichst, die Spracherkennung schreibt mit.':m==='dict'?'Du sprichst über das Mikrofon deiner Tastatur.':m==='rec'?'Du nimmst dich auf und vergleichst.':'Du sprichst nach und bewertest dich selbst.';
+  const on=ok?Math.max(1,Math.round(ok/tot*30)):0;
+  let segs='';
+  for(let k=0;k<30;k++) segs+='<i'+(k<on?' class="on"':'')+'></i>';
+  let h='<header class="mast"><div class="brand-row"><h1 class="brand">Mundwerk</h1><button class="icon-btn" data-act="settings" aria-label="Einstellungen">'+ICON.gear+'</button></div>'+
+    '<div class="stat" role="img" aria-label="'+ok+' von '+tot+' sitzen"><span class="num">'+ok+'</span><span class="of">/ '+tot+'</span></div>'+
+    '<p class="cap">Wörter und Sätze sitzen. '+how+' Drei Treffer am Stück, dann ist es deins.</p>'+
+    '<div class="segs" aria-hidden="true">'+segs+'</div>'+
+    '<div class="acc-row"><span class="seg" role="group" aria-label="Akzent"><button data-act="acc" data-v="gb" aria-pressed="'+(!us)+'">Britisch</button><button data-act="acc" data-v="us" aria-pressed="'+us+'">Amerikanisch</button></span></div></header>';
   h+=updateHTML()+offlineHTML(true)+modeNote();
-  if(weak.length) h+='<section class="group"><h2>Offen vom letzten Mal</h2><button class="row" data-act="weak"><span class="sym" style="color:var(--red)" aria-hidden="true">f</span><span><span class="row-name">Schwächen</span><span class="row-sub">'+weak.length+(weak.length===1?' Eintrag, der':' Einträge, die')+' zuletzt daneben '+(weak.length===1?'ging':'gingen')+'</span></span><span class="row-count"></span></button></section>';
+  if(next) h+='<button class="cta" data-act="open" data-id="'+esc(next.p.id)+'"><span>Weiter üben<small>'+esc(next.p.name)+' · '+next.open+' offen</small></span>'+ICON.right+'</button>';
+  if(weak.length) h+='<section class="group"><h2>Offen vom letzten Mal</h2><div class="list">'+rowHTML('weak','','!','Schwächen',weak.length+(weak.length===1?' Eintrag, der':' Einträge, die')+' zuletzt daneben '+(weak.length===1?'ging':'gingen'),'',0,'weak')+'</div></section>';
   GROUPS.forEach(function(g){
     const ps=packs.filter(function(p){return p.g===g[0];});
+    if(!ps.length&&g[0]!=='own') return;
     h+='<section class="group"><h2>'+esc(g[1])+'</h2>';
-    ps.forEach(function(p){
+    if(ps.length) h+='<div class="list">'+ps.map(function(p){
       const n=p.items.length,d=p.items.filter(isDone).length;
-      h+='<button class="row'+(d===n?' full':'')+'" data-act="open" data-id="'+esc(p.id)+'"><span class="sym" lang="en" aria-hidden="true">'+esc(p.sym)+'</span><span><span class="row-name">'+esc(p.name)+'</span><span class="row-sub">'+esc(p.sub)+'</span></span><span class="row-count"><b>'+d+'</b> / '+n+'</span></button>';
-    });
+      return rowHTML('open',p.id,p.sym,p.name,p.sub,two(d,n)+'/'+n,n?d/n:0,d===n?'full':'');
+    }).join('')+'</div>';
     if(g[0]==='own') h+=ownHTML();
     h+='</section>';
   });
-  h+='<section class="group"><h2>Einstellungen</h2><div class="settings">';
+  h+='<section class="group" id="einstellungen"><h2>Einstellungen</h2><div class="settings">';
   const cm=m==='auto'?'auto':m==='dict'?'dict':'self';
-  h+='<div class="set"><span class="set-label">Prüfung<span class="set-help">Mikrofon der App, Diktat über die Tastatur oder selbst vergleichen.</span></span><span class="seg" role="group" aria-label="Prüfung">'+
+  h+='<div class="set stack"><span class="set-label">Prüfung<span class="set-help">Mikrofon der App, Diktat über die Tastatur oder selbst vergleichen.</span></span><span class="seg" role="group" aria-label="Prüfung">'+
     (srOk()?'<button data-act="check" data-v="auto" aria-pressed="'+(cm==='auto')+'">Mikro</button>':'')+
     '<button data-act="check" data-v="dict" aria-pressed="'+(cm==='dict')+'">Diktat</button><button data-act="check" data-v="self" aria-pressed="'+(cm==='self')+'">Selbst</button></span></div>';
   h+='<div class="set"><span class="set-label">Mikrofon-Test<span class="set-help">Zeigt, ob und wie die App dich hören kann.</span></span><button class="btn quiet" data-act="diag"'+(diagBusy?' disabled':'')+'>Testen</button></div>';
+  h+='<div class="set stack"><span class="set-label">Aussehen<span class="set-help">Dunkel, hell oder wie dein Gerät eingestellt ist.</span></span><span class="seg" role="group" aria-label="Aussehen">'+
+    ['dark','light','auto'].map(function(t){return '<button data-act="theme" data-v="'+t+'" aria-pressed="'+(state.theme===t)+'">'+{dark:'Dunkel',light:'Hell',auto:'Auto'}[t]+'</button>';}).join('')+'</span></div>';
   if(!env.app&&!env.framed) h+='<div class="set"><span class="set-label">Auf den Home-Bildschirm<span class="set-help">'+esc(installHelp())+'</span></span></div>';
-  if(env.tts) h+='<div class="set"><span class="set-label">Vorsprechen<span class="set-help">Jedes neue Wort wird einmal vorgelesen.</span></span><span class="seg" role="group" aria-label="Vorsprechen"><button data-act="auto" data-v="on" aria-pressed="'+state.auto+'">An</button><button data-act="auto" data-v="off" aria-pressed="'+(!state.auto)+'">Aus</button></span></div>';
+  if(env.tts) h+='<div class="set stack"><span class="set-label">Vorsprechen<span class="set-help">Jedes neue Wort wird einmal vorgelesen.</span></span><span class="seg" role="group" aria-label="Vorsprechen"><button data-act="auto" data-v="on" aria-pressed="'+state.auto+'">An</button><button data-act="auto" data-v="off" aria-pressed="'+(!state.auto)+'">Aus</button></span></div>';
   h+=syncHTML();
   h+='<div class="set"><span class="set-label">Fortschritt<span class="set-help">'+(confirmReset?'Wirklich alle Haken löschen?'+(syncUser?' Auch auf deinen anderen Geräten.':''):'Alle Haken löschen und von vorn anfangen.')+'</span></span>'+
     (confirmReset?'<span class="btns" style="margin:0;flex-wrap:nowrap"><button class="btn danger" data-act="reset-yes">Löschen</button><button class="btn quiet" data-act="reset-no">Behalten</button></span>':'<button class="btn quiet" data-act="reset">Zurücksetzen</button>')+'</div>';
@@ -722,7 +760,9 @@ function verdictHTML(it,last,pk){
 function practiceHTML(){
   const it=cur(),pk=packById(it.pid)||{},s=Math.min(recOf(it.id).s||0,it.need),done=s>=it.need,m=mode();
   const last=(sess.last&&sess.last.id===it.id)?sess.last:null;
-  let h='<div class="top"><button class="back" data-act="home">'+ICON.left+'Übersicht</button><div class="top-title">'+esc(sess.title)+'</div><div class="top-pos">'+(sess.i+1)+' / '+sess.queue.length+'</div></div><main class="card">';
+  const pos=sess.queue.length>=10?two(sess.i+1,sess.queue.length):String(sess.i+1);
+  let h='<div class="top"><button class="back" data-act="home">'+ICON.left+'Übersicht</button><div class="top-pos" aria-label="'+(sess.i+1)+' von '+sess.queue.length+'">'+pos+' / '+sess.queue.length+'</div></div><main class="card">';
+  h+='<div class="kind">'+esc(pk.name&&pk.name!==sess.title?sess.title+' · '+pk.name:(pk.name||sess.title))+'</div>';
   if(it.kind==='w'){
     const n=Math.max(5,Math.max.apply(null,it.text.split(/\s+/).map(function(w){return w.length;})));
     h+='<h1 class="head" lang="en" style="--n:'+n+'">'+hl(it.raw)+'</h1>';
@@ -731,11 +771,11 @@ function practiceHTML(){
   if(ipa||it.de) h+='<div class="meta">'+(ipa?'<span class="ipa" lang="en">/'+esc(ipa)+'/</span>':'')+(it.de?'<span class="de">'+esc(it.de)+'</span>':'')+'</div>';
   if(it.vs) h+='<p class="hint">Nicht verwechseln mit <i lang="en">'+esc(it.vs)+'</i>.</p>';
   if(say) h+='<p class="hint">'+esc(say)+'</p>';
-  if(env.tts) h+='<div class="listen"><button class="lbtn" data-act="say">'+ICON.spk+'Anhören</button><button class="lbtn" data-act="slow">'+ICON.spk+'Langsam</button></div>';
+  if(env.tts) h+='<div class="listen"><button class="lbtn" data-act="say">'+ICON.spk+'Anhören</button><button class="lbtn" data-act="slow">'+ICON.slow+'Langsam</button></div>';
   else h+='<p class="hint">Dieser Browser kann nicht vorlesen. Halte dich an die Lautschrift.</p>';
   h+='<div class="ticks" role="img" aria-label="'+s+' von '+it.need+' Treffern am Stück">';
-  for(let k=0;k<it.need;k++) h+='<span class="tick'+(k<s?' on':'')+(last&&last.v==='hit'&&k===s-1?' new':'')+'">'+ICON.check+'</span>';
-  h+='<span class="ticks-label">'+(done?'Sitzt':(it.need===3?'Drei':'Zwei')+' Treffer am Stück')+'</span></div>';
+  for(let k=0;k<it.need;k++) h+='<span class="tick'+(k<s?' on':'')+(last&&last.v==='hit'&&k===s-1?' new':'')+'"><i></i></span>';
+  h+='</div><div class="ticks-label'+(done?' done':'')+'">'+(done?'Sitzt':s+' von '+it.need+' Treffern am Stück')+'</div>';
   h+=offlineHTML(false);
   if(m==='rec'){
     if(sess.take&&sess.take.id===it.id) h+='<div class="rate"><div class="listen" style="margin-top:0"><button class="lbtn" data-act="mine">'+ICON.spk+'Aufnahme</button><button class="lbtn" data-act="say">'+ICON.spk+'Vorlage</button></div><p style="margin-top:12px">Klingt deine Aufnahme wie die Vorlage?</p><div class="btns"><button class="btn solid" data-act="yes">Klingt gleich</button><button class="btn quiet" data-act="no">Klingt anders</button></div></div>';
@@ -768,7 +808,8 @@ function practiceHTML(){
   }
   const lastOne=sess.i>=sess.queue.length-1;
   h+='<div class="bar"><div class="bar-in"><button class="nav prev" data-act="prev"'+(sess.i===0?' disabled':'')+'>'+ICON.left+'Zurück</button>'+mid+
-    '<button class="nav next'+(done?' go':'')+'" data-act="next">'+(lastOne?'Fertig':'Weiter')+ICON.right+'</button><div class="mic-label" id="mic-label">'+esc(label)+'</div></div></div>';
+    '<button class="nav next'+(done?' go':'')+'" data-act="next">'+(lastOne?'Fertig':'Weiter')+ICON.right+'</button><div class="mic-label" id="mic-label">'+esc(label)+'</div>'+
+    (listening||recOn?'<div class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>':'')+'</div></div>';
   return h;
 }
 function doneHTML(){
@@ -823,6 +864,8 @@ document.addEventListener('click',function(e){
   else if(a==='update') applyUpdate(true);
   else if(a==='diag') runDiag();
   else if(a==='auto'){state.auto=v==='on';persist();render();}
+  else if(a==='theme'){state.theme=(v==='light'||v==='auto')?v:'dark';saveLocal();applyTheme();render();}
+  else if(a==='settings'){const el=$('#einstellungen');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
   else if(a==='reset'){confirmReset=true;render();}
   else if(a==='reset-no'){confirmReset=false;render();}
   else if(a==='reset-yes'){confirmReset=false;state.items={};state.resetAt=Date.now();persist();render();}
@@ -869,6 +912,7 @@ window.addEventListener('storage',function(e){
 
 loadLocal();
 draft=state.custom.text;
+applyTheme();
 render();
 swSetup();
 try{if(syncOn()&&localStorage.getItem(SYNC)==='1') loadSync();}catch(e){}

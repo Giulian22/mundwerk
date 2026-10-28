@@ -10,8 +10,8 @@ Du sprichst ein Wort, die Spracherkennung schreibt mit. Drei Treffer am Stück (
 | Datei | Inhalt |
 | --- | --- |
 | `index.html` | Startseite der App |
-| `css/app.css` | Design (hell und dunkel) |
-| `css/fonts.css`, `fonts/` | Schriften, liegen im Projekt |
+| `css/app.css` | Design „Dunkel“ mit Neon-Grün, hell auf Wunsch (Einstellungen, Aussehen) |
+| `css/fonts.css`, `fonts/` | Schriften Space Grotesk, Inter und Charis SIL (Lautschrift), liegen im Projekt |
 | `js/data.js` | Alle Pakete, Wörter, Sätze, Lautschrift und Tipps |
 | `js/core.js` | Vergleich mit dem Gesprochenen, Spielstand |
 | `js/app.js` | Bildschirm, Mikrofon, Vorlesen, Offline und Updates |
@@ -19,7 +19,7 @@ Du sprichst ein Wort, die Spracherkennung schreibt mit. Drei Treffer am Stück (
 | `vendor/firebase.js` | Firebase-Bibliothek (App, Auth, Firestore Lite), gebaut mit `npm run build:firebase` |
 | `firestore.rules` | Sicherheitsregeln: Nur du liest und schreibst deine Daten |
 | `sw.js` | Service Worker: speichert alles für den Start ohne Internet |
-| `manifest.webmanifest`, `icons/` | Damit Mundwerk wie eine App auf den Home-Bildschirm kann |
+| `manifest.webmanifest`, `icons/` | Damit Mundwerk wie eine App auf den Home-Bildschirm kann. Icon: Schallwelle in Mundform (`icons/icon.svg`) |
 | `test/` | Automatische Prüfung (`npm test`) |
 | `tools/version.mjs` | Neue Version in `sw.js` eintragen (`npm run stamp`) |
 
@@ -55,5 +55,5 @@ Die Spracherkennung selbst läuft über den Browser (Chrome nutzt dafür Google,
 
 ## Lizenzen
 
-Schriften: Charis SIL und Atkinson Hyperlegible Next, beide unter der SIL Open Font License 1.1 (`fonts/OFL-*.txt`).
+Schriften: Space Grotesk, Inter und Charis SIL, alle unter der SIL Open Font License 1.1 (`fonts/OFL-*.txt`).
 Firebase JS SDK: Apache License 2.0 (Hinweise am Ende von `vendor/firebase.js`).

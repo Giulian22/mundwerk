@@ -122,13 +122,14 @@ export function splitSentences(text){
    items: pro Wort oder Satz s = Treffer am Stück, a = Versuche, h = Treffer, t = Zeitpunkt des letzten Versuchs.
    Für den Abgleich zwischen Geräten: stamps sagt, wann Akzent und eigener Text zuletzt geändert wurden,
    resetAt, wann zuletzt alles zurückgesetzt wurde. */
-export function blank(){return {v:2,accent:'gb',auto:true,check:'auto',items:{},custom:{text:''},ts:0,resetAt:0,stamps:{accent:0,text:0}};}
+export function blank(){return {v:2,accent:'gb',auto:true,check:'auto',theme:'dark',items:{},custom:{text:''},ts:0,resetAt:0,stamps:{accent:0,text:0}};}
 export function clean(o){
   const out=blank();
   if(!o||typeof o!=='object') return out;
   out.accent=o.accent==='us'?'us':'gb';
   out.auto=o.auto!==false;
   out.check=(o.check==='self'||o.check==='dict')?o.check:'auto';
+  out.theme=(o.theme==='light'||o.theme==='auto')?o.theme:'dark';
   out.ts=Number(o.ts)||0;
   out.resetAt=Number(o.resetAt)||0;
   if(o.items&&typeof o.items==='object'){
@@ -151,7 +152,7 @@ function newer(x,y){
 }
 /* Zwei Spielstände zusammenführen (zum Beispiel Handy und Laptop): pro Eintrag gewinnt der neueste Versuch.
    Akzent und eigener Text kommen von dem Stand, der sie zuletzt geändert hat. Zurücksetzen löscht alles, was davor geübt wurde.
-   Prüfart und Vorsprechen passen nur zum jeweiligen Gerät und bleiben wie in a. */
+   Prüfart, Vorsprechen und Aussehen passen nur zum jeweiligen Gerät und bleiben wie in a. */
 export function merge(a,b){
   a=clean(a);b=clean(b);
   const out=clean(a),ids={};
@@ -168,7 +169,7 @@ export function merge(a,b){
   });
   return out;
 }
-/* Was auf andere Geräte übertragen wird: alles außer Prüfart und Vorsprechen */
+/* Was auf andere Geräte übertragen wird: alles außer Prüfart, Vorsprechen und Aussehen */
 export function syncPart(s){
   s=clean(s);
   return {v:s.v,accent:s.accent,items:s.items,custom:{text:s.custom.text},ts:s.ts,resetAt:s.resetAt,stamps:s.stamps};
