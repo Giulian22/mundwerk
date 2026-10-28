@@ -119,8 +119,10 @@ export function splitSentences(text){
 }
 
 /* ---------- Spielstand ----------
-   items: pro Wort oder Satz s = Treffer am Stück, a = Versuche, h = Treffer, t = Zeitpunkt des letzten Versuchs */
-export function blank(){return {v:1,accent:'gb',auto:true,check:'auto',items:{},custom:{text:''},ts:0};}
+   items: pro Wort oder Satz s = Treffer am Stück, a = Versuche, h = Treffer, t = Zeitpunkt des letzten Versuchs.
+   Für den Abgleich zwischen Geräten: stamps sagt, wann Akzent und eigener Text zuletzt geändert wurden,
+   resetAt, wann zuletzt alles zurückgesetzt wurde. */
+export function blank(){return {v:2,accent:'gb',auto:true,check:'auto',items:{},custom:{text:''},ts:0,resetAt:0,stamps:{accent:0,text:0}};}
 export function clean(o){
   const out=blank();
   if(!o||typeof o!=='object') return out;
@@ -128,24 +130,46 @@ export function clean(o){
   out.auto=o.auto!==false;
   out.check=(o.check==='self'||o.check==='dict')?o.check:'auto';
   out.ts=Number(o.ts)||0;
+  out.resetAt=Number(o.resetAt)||0;
   if(o.items&&typeof o.items==='object'){
     Object.keys(o.items).forEach(function(k){
       const r=o.items[k];
-      if(r&&typeof r==='object') out.items[k]={s:Math.max(0,r.s|0),a:Math.max(0,r.a|0),h:Math.max(0,r.h|0),t:Number(r.t)||0};
+      if(r&&typeof r==='object'&&(Number(r.t)||0)>out.resetAt) out.items[k]={s:Math.max(0,r.s|0),a:Math.max(0,r.a|0),h:Math.max(0,r.h|0),t:Number(r.t)||0};
     });
   }
   if(o.custom&&typeof o.custom==='object') out.custom.text=String(o.custom.text||'').slice(0,8000);
+  /* Ältere Spielstände ohne stamps: Zeitpunkt der letzten Änderung überhaupt */
+  const st=(o.stamps&&typeof o.stamps==='object')?o.stamps:{};
+  out.stamps={accent:Number(st.accent)||out.ts,text:Number(st.text)||out.ts};
   return out;
 }
-/* Zwei Spielstände zusammenführen: pro Eintrag gewinnt der neueste Versuch, die Einstellungen kommen vom zuletzt geänderten Stand. */
+/* Gleich alt: der Eintrag mit mehr Versuchen gewinnt, damit beide Geräte dasselbe Ergebnis bekommen */
+function newer(x,y){
+  if(y.t!==x.t) return y.t>x.t?y:x;
+  if(y.a!==x.a) return y.a>x.a?y:x;
+  return y.s>x.s?y:x;
+}
+/* Zwei Spielstände zusammenführen (zum Beispiel Handy und Laptop): pro Eintrag gewinnt der neueste Versuch.
+   Akzent und eigener Text kommen von dem Stand, der sie zuletzt geändert hat. Zurücksetzen löscht alles, was davor geübt wurde.
+   Prüfart und Vorsprechen passen nur zum jeweiligen Gerät und bleiben wie in a. */
 export function merge(a,b){
-  const out=clean(b.ts>a.ts?b:a),ids={};
+  a=clean(a);b=clean(b);
+  const out=clean(a),ids={};
+  out.ts=Math.max(a.ts,b.ts);
+  out.resetAt=Math.max(a.resetAt,b.resetAt);
+  if(b.stamps.accent>a.stamps.accent){out.accent=b.accent;out.stamps.accent=b.stamps.accent;}
+  if(b.stamps.text>a.stamps.text){out.custom.text=b.custom.text;out.stamps.text=b.stamps.text;}
   Object.keys(a.items).forEach(function(k){ids[k]=1;});
   Object.keys(b.items).forEach(function(k){ids[k]=1;});
   out.items={};
-  Object.keys(ids).forEach(function(k){
-    const x=a.items[k],y=b.items[k];
-    out.items[k]=!x?y:!y?x:((y.t||0)>(x.t||0)?y:x);
+  Object.keys(ids).sort().forEach(function(k){
+    const x=a.items[k],y=b.items[k],r=!x?y:!y?x:newer(x,y);
+    if(r.t>out.resetAt) out.items[k]=Object.assign({},r);
   });
   return out;
+}
+/* Was auf andere Geräte übertragen wird: alles außer Prüfart und Vorsprechen */
+export function syncPart(s){
+  s=clean(s);
+  return {v:s.v,accent:s.accent,items:s.items,custom:{text:s.custom.text},ts:s.ts,resetAt:s.resetAt,stamps:s.stamps};
 }

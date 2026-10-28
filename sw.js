@@ -1,8 +1,8 @@
 /* Service Worker von Mundwerk: speichert App, Inhalte und Schriften, damit alles ohne Internet startet.
    Jede Version bekommt einen eigenen Speicher. VERSION und FILES schreibt `npm run stamp` neu,
    der Test prüft, dass das nach jeder Änderung passiert ist. Nur so erkennt der Browser ein Update. */
-const VERSION='2026-10-28-7ebcf023';
-const FILES=['./','css/app.css','css/fonts.css','fonts/atkinson-hyperlegible-next-latin-400-normal.woff2','fonts/atkinson-hyperlegible-next-latin-600-normal.woff2','fonts/atkinson-hyperlegible-next-latin-700-normal.woff2','fonts/charis-sil-latin-400-italic.woff2','fonts/charis-sil-latin-400-normal.woff2','fonts/charis-sil-latin-700-normal.woff2','fonts/charis-sil-latin-ext-400-normal.woff2','icons/apple-touch-icon.png','icons/icon-192.png','icons/icon-32.png','icons/icon-512.png','icons/icon.svg','icons/maskable-512.png','index.html','js/app.js','js/core.js','js/data.js','manifest.webmanifest'];
+const VERSION='2026-10-28-8fa50d6c';
+const FILES=['./','css/app.css','css/fonts.css','fonts/atkinson-hyperlegible-next-latin-400-normal.woff2','fonts/atkinson-hyperlegible-next-latin-600-normal.woff2','fonts/atkinson-hyperlegible-next-latin-700-normal.woff2','fonts/charis-sil-latin-400-italic.woff2','fonts/charis-sil-latin-400-normal.woff2','fonts/charis-sil-latin-700-normal.woff2','fonts/charis-sil-latin-ext-400-normal.woff2','icons/apple-touch-icon.png','icons/icon-192.png','icons/icon-32.png','icons/icon-512.png','icons/icon.svg','icons/maskable-512.png','index.html','js/app.js','js/core.js','js/data.js','js/firebase-config.js','js/sync.js','manifest.webmanifest','vendor/firebase.js'];
 const CACHE='mundwerk-'+VERSION;
 const BASE=new URL('./',self.location).pathname;
 

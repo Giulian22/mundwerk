@@ -15,7 +15,7 @@ function walk(dir){
 /* Alles, was die App zum Starten braucht. Lizenztexte, Tests und Werkzeuge gehören nicht dazu. */
 export function appFiles(){
   const files=['index.html','manifest.webmanifest']
-    .concat(walk('css'),walk('js'),walk('icons'),walk('fonts').filter(function(f){return f.endsWith('.woff2');}));
+    .concat(walk('css'),walk('js'),walk('icons'),walk('vendor'),walk('fonts').filter(function(f){return f.endsWith('.woff2');}));
   return ['./'].concat(files.sort());
 }
 export function contentHash(files){

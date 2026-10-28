@@ -15,6 +15,9 @@ Du sprichst ein Wort, die Spracherkennung schreibt mit. Drei Treffer am Stück (
 | `js/data.js` | Alle Pakete, Wörter, Sätze, Lautschrift und Tipps |
 | `js/core.js` | Vergleich mit dem Gesprochenen, Spielstand |
 | `js/app.js` | Bildschirm, Mikrofon, Vorlesen, Offline und Updates |
+| `js/sync.js`, `js/firebase-config.js` | Synchronisierung zwischen Geräten über Firebase |
+| `vendor/firebase.js` | Firebase-Bibliothek (App, Auth, Firestore Lite), gebaut mit `npm run build:firebase` |
+| `firestore.rules` | Sicherheitsregeln: Nur du liest und schreibst deine Daten |
 | `sw.js` | Service Worker: speichert alles für den Start ohne Internet |
 | `manifest.webmanifest`, `icons/` | Damit Mundwerk wie eine App auf den Home-Bildschirm kann |
 | `test/` | Automatische Prüfung (`npm test`) |
@@ -37,11 +40,20 @@ Du sprichst ein Wort, die Spracherkennung schreibt mit. Drei Treffer am Stück (
 Ein Service Worker (`sw.js`) speichert App, Inhalte und Schriften. Mundwerk startet deshalb auch ohne Internet. Die Spracherkennung braucht meist trotzdem Internet: Offline wechselt die App von selbst auf Diktat (Handy) oder Selbst-Modus (Laptop).
 Nach jeder Änderung an App-Dateien `npm run stamp` ausführen. Das schreibt eine neue Version in `sw.js`, und nur dann lädt der Browser das Update. `npm test` meldet, wenn das vergessen wurde.
 
+## Synchronisierung
+
+Nach der Anmeldung mit Google liegt der Fortschritt zusätzlich in einem privaten Firestore-Dokument (`users/{Nutzer-ID}`).
+- Ohne Anmeldung oder offline läuft alles lokal weiter. Sobald wieder Internet da ist, wird zusammengeführt: pro Eintrag gewinnt der neueste Versuch (`merge` in `js/core.js`). Zurücksetzen gilt auf allen Geräten.
+- Mit abgeglichen werden Fortschritt, Akzent und eigener Text. Prüfart und Vorsprechen bleiben pro Gerät.
+- `js/firebase-config.js` enthält die Kennung des Firebase-Projekts. Das ist kein Geheimnis, jede Firebase-Web-App zeigt sie im Browser. Die Daten schützen `firestore.rules` und die Google-Anmeldung.
+- Regeln testen: `npm run test:rules` (startet den Firebase-Emulator, braucht Java).
+
 ## Datenschutz
 
-Keine Werbung, kein Tracking, keine Schriften von fremden Servern. Dein Fortschritt bleibt im Browser.
-Die Spracherkennung selbst läuft über den Browser (Chrome nutzt dafür Google, Safari nutzt Apple).
+Keine Werbung, kein Tracking, keine Schriften von fremden Servern. Ohne Anmeldung bleibt dein Fortschritt im Browser, und Mundwerk spricht mit keinem Server außer GitHub Pages.
+Die Spracherkennung selbst läuft über den Browser (Chrome nutzt dafür Google, Safari nutzt Apple). Erst wenn du dich anmeldest, lädt Firebase das Google-Anmeldefenster und speichert deinen Fortschritt bei Google (Firebase).
 
 ## Lizenzen
 
 Schriften: Charis SIL und Atkinson Hyperlegible Next, beide unter der SIL Open Font License 1.1 (`fonts/OFL-*.txt`).
+Firebase JS SDK: Apache License 2.0 (Hinweise am Ende von `vendor/firebase.js`).

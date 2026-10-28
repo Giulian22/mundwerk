@@ -5,6 +5,12 @@
   "description": "Englische Aussprache üben, bis sie sitzt.",
   "scripts": {
     "test": "node --test test/*.test.js",
-    "stamp": "node tools/version.mjs"
+    "stamp": "node tools/version.mjs",
+    "build:firebase": "node tools/build-firebase.mjs",
+    "test:rules": "npx --yes firebase-tools@15.33.0 emulators:exec --only auth,firestore --project demo-mundwerk \"node test/rules.emulator.mjs\""
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "firebase": "12.19.0"
   }
 }

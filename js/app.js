@@ -1,6 +1,7 @@
 /* Mundwerk: Bildschirm, Mikrofon, Vorlesen und Speichern. Inhalte stehen in data.js, die Vergleichslogik in core.js. */
 import {GROUPS} from './data.js';
 import {PACKS,mkSent,compare,judge,splitSentences,blank,clean,merge} from './core.js';
+import {FIREBASE} from './firebase-config.js';
 
 /* ---------- Helfer ---------- */
 const $=function(s,el){return (el||document).querySelector(s);};
@@ -22,7 +23,15 @@ const LS='mundwerk.v1';
 let state=blank();
 function loadLocal(){try{const s=localStorage.getItem(LS);if(s)state=clean(JSON.parse(s));}catch(e){}}
 function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}}
-function persist(){state.ts=Date.now();saveLocal();}
+/* kind: 'accent' oder 'text', damit beim Abgleich klar ist, welches Gerät sie zuletzt geändert hat */
+function persist(kind){
+  const t=Date.now();
+  state.ts=t;
+  if(kind==='accent') state.stamps.accent=t;
+  else if(kind==='text') state.stamps.text=t;
+  saveLocal();
+  if(sync) sync.changed();
+}
 
 /* ---------- Was kann dieses Gerät ---------- */
 const UA=navigator.userAgent||'';
@@ -45,6 +54,7 @@ try{
    App-internen Browsern ist sie zwar vorhanden, bleibt aber stumm oder meldet einen Fehler. Klappt sie dort doch
    einmal (Mikrofon-Test), merkt sich die App das bis zum nächsten iOS-Update. */
 const PROVEN='mundwerk.srProven';
+env.inApp=/FBAN|FBAV|Instagram|Snapchat|Line\/|Twitter|BytedanceWebview|musical_ly|Pinterest|GSA\//.test(UA);
 env.iosOther=env.ios&&/CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|GSA\/|DuckDuckGo|YaBrowser|FBAN|FBAV|Instagram|Snapchat|Line\/|Twitter|BytedanceWebview|musical_ly|Pinterest/.test(UA);
 env.iosNoSR=env.ios&&(env.app||env.iosOther);
 try{if(env.iosNoSR&&localStorage.getItem(PROVEN)===UA) env.iosNoSR=false;}catch(e){}
@@ -319,7 +329,7 @@ function micAct(){
 
 /* ---------- Eigener Text ---------- */
 function saveOwn(){
-  state.custom.text=draft.slice(0,8000);persist();
+  state.custom.text=draft.slice(0,8000);persist('text');
   const n=splitSentences(state.custom.text).length;
   ownMsg=n?(n===1?'1 Satz übernommen.':n+' Sätze übernommen.')+' Du findest sie oben unter „Meine Sätze“.':'Kein englischer Satz gefunden.';
   render();
@@ -456,6 +466,71 @@ function diagHTML(){
   else res='Hier geht nur das Diktat über die Tastatur. Für den Mikrofon-Knopf Mundwerk in Chrome oder Edge (Windows, Android) oder Safari (iPhone, Mac) öffnen.';
   return '<div class="diag"><p>'+esc(a)+'<br>'+esc(b)+'<br>'+esc(c)+'</p><p><b>'+esc(res)+'</b></p>'+(!d.runs&&env.ios?safariHTML():'')+
     '<p class="small">Code für Rückfragen: '+esc([env.framed?'E':env.app?'A':'D',env.ios?'i':'-',d.policy,sr,g,d.sig===null?'-':(d.sig?'1':'0')].join(' / '))+'</p></div>';
+}
+
+/* ---------- Synchronisierung zwischen Geräten (nur nach Anmeldung mit Google) ---------- */
+const SYNC='mundwerk.sync';
+let sync=null,syncLoad=false,syncUser=null,syncStat='',syncCode='',syncAt=0,syncTap=false;
+function syncOn(){return !!(FIREBASE.apiKey&&FIREBASE.projectId)&&!env.framed;}
+function loadSync(){
+  if(sync||syncLoad||!syncOn()) return Promise.resolve(sync);
+  syncLoad=true;softRender();
+  return import('./sync.js').then(function(m){
+    sync=m.startSync({
+      get:function(){return state;},
+      take:function(other){const old=state.custom.text;state=merge(state,other);saveLocal();if(draft===old)draft=state.custom.text;softRender();},
+      user:function(u){syncUser=u;try{if(u)localStorage.setItem(SYNC,'1');else localStorage.removeItem(SYNC);}catch(e){}if(u)syncTap=false;softRender();},
+      status:function(st,code){syncStat=st;syncCode=code||'';if(st==='ok')syncAt=Date.now();softRender();}
+    });
+    syncLoad=false;softRender();return sync;
+  }).catch(function(){syncLoad=false;syncStat='error';syncCode='load';softRender();return null;});
+}
+function signIn(){
+  syncCode='';syncStat='';
+  loadSync().then(function(s){
+    if(!s) return;
+    s.prepare().then(function(){
+      /* Das Anmeldefenster darf nur direkt nach einem Tippen aufgehen. Hat die Vorbereitung zu lange gedauert: nochmal tippen lassen. */
+      const ua=navigator.userActivation;
+      if(!ua||ua.isActive){syncTap=false;s.signIn();}
+      else{syncTap=true;softRender();}
+    });
+  });
+}
+function syncText(){
+  if(syncLoad) return 'Einen Moment …';
+  if(syncStat==='busy') return 'Wird abgeglichen …';
+  if(syncStat==='offline') return 'Offline. Sobald du wieder online bist, wird abgeglichen.';
+  if(syncStat==='ok'){const d=new Date(syncAt);return 'Abgeglichen um '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')+' Uhr.';}
+  if(syncStat!=='error') return '';
+  const c=syncCode;
+  if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'||c==='auth/user-cancelled') return '';
+  if(c==='auth/popup-blocked') return 'Das Anmeldefenster wurde blockiert. Tipp nochmal auf „Mit Google anmelden“.';
+  if(c==='auth/unauthorized-domain') return 'Diese Adresse ist in Firebase noch nicht freigegeben (Authentication, Settings, Authorized domains).';
+  if(c==='auth/operation-not-allowed') return 'Die Anmeldung mit Google ist in Firebase noch nicht eingeschaltet.';
+  if(c==='auth/network-request-failed'||c==='unavailable'||c==='deadline-exceeded') return 'Keine Verbindung zum Server. Neuer Versuch, sobald du wieder online bist.';
+  if(c==='permission-denied') return 'Kein Zugriff auf deine Daten. Prüf die Sicherheitsregeln in Firebase.';
+  if(c==='auth/web-storage-unsupported'||c==='auth/operation-not-supported-in-this-environment') return 'In dieser Ansicht geht die Anmeldung nicht. Öffne Mundwerk in Safari oder Chrome.';
+  if(c==='load') return 'Die Synchronisierung konnte nicht geladen werden. Prüf die Internetverbindung.';
+  return 'Das hat nicht geklappt'+(c?' ('+c+')':'')+'. Versuch es nochmal.';
+}
+function syncHTML(){
+  if(!syncOn()) return '';
+  const msg=syncText();
+  let h='<div class="set wide"><span class="set-label">Auf allen Geräten gleich<span class="set-help">';
+  if(syncUser){
+    const who=syncUser.name&&syncUser.email?syncUser.name+' ('+syncUser.email+')':(syncUser.name||syncUser.email);
+    h+=esc('Angemeldet als '+who+'. Dein Fortschritt wird automatisch mit deinen anderen Geräten abgeglichen.'+(msg?' '+msg:''))+'</span></span>';
+    h+='<div class="btns"><button class="btn quiet" data-act="sync-now"'+(syncStat==='busy'?' disabled':'')+'>Jetzt abgleichen</button><button class="btn quiet" data-act="sync-out">Abmelden</button></div></div>';
+    return h;
+  }
+  let help='Melde dich mit deinem Google-Konto an, dann ist dein Fortschritt auf Handy und Laptop gleich. Ohne Anmeldung bleibt alles nur auf diesem Gerät.';
+  if(env.ios&&env.app) help+=' Auf dem iPhone klappt die Anmeldung meist nur in Safari, nicht in der Homescreen-App.';
+  else if(env.inApp) help+=' In App-Browsern lässt Google keine Anmeldung zu. Öffne Mundwerk in Safari oder Chrome.';
+  if(syncTap) help+=' Fertig geladen: Tipp jetzt auf „Jetzt anmelden“.';
+  if(msg&&!syncLoad) help+=' '+msg;
+  h+=esc(help)+'</span></span><div class="btns"><button class="btn solid" data-act="sync-in"'+(syncLoad?' disabled':'')+'>'+(syncLoad?'Einen Moment …':syncTap?'Jetzt anmelden':'Mit Google anmelden')+'</button></div></div>';
+  return h;
 }
 
 /* ---------- Offline und Updates ---------- */
@@ -606,11 +681,12 @@ function homeHTML(){
   h+='<div class="set"><span class="set-label">Mikrofon-Test<span class="set-help">Zeigt, ob und wie die App dich hören kann.</span></span><button class="btn quiet" data-act="diag"'+(diagBusy?' disabled':'')+'>Testen</button></div>';
   if(!env.app&&!env.framed) h+='<div class="set"><span class="set-label">Auf den Home-Bildschirm<span class="set-help">'+esc(installHelp())+'</span></span></div>';
   if(env.tts) h+='<div class="set"><span class="set-label">Vorsprechen<span class="set-help">Jedes neue Wort wird einmal vorgelesen.</span></span><span class="seg" role="group" aria-label="Vorsprechen"><button data-act="auto" data-v="on" aria-pressed="'+state.auto+'">An</button><button data-act="auto" data-v="off" aria-pressed="'+(!state.auto)+'">Aus</button></span></div>';
-  h+='<div class="set"><span class="set-label">Fortschritt<span class="set-help">'+(confirmReset?'Wirklich alle Haken löschen?':'Alle Haken löschen und von vorn anfangen.')+'</span></span>'+
+  h+=syncHTML();
+  h+='<div class="set"><span class="set-label">Fortschritt<span class="set-help">'+(confirmReset?'Wirklich alle Haken löschen?'+(syncUser?' Auch auf deinen anderen Geräten.':''):'Alle Haken löschen und von vorn anfangen.')+'</span></span>'+
     (confirmReset?'<span class="btns" style="margin:0;flex-wrap:nowrap"><button class="btn danger" data-act="reset-yes">Löschen</button><button class="btn quiet" data-act="reset-no">Behalten</button></span>':'<button class="btn quiet" data-act="reset">Zurücksetzen</button>')+'</div>';
   h+='</div></section>';
   h+='<footer class="foot">'+(m==='auto'||m==='dict'?'<p>Die Spracherkennung ist streng, aber kein perfekter Richter. Verwechslungen wie think und sink hört sie gut, feine Klangunterschiede nicht. Versteht sie ein Wort dauerhaft falsch, obwohl es für dich wie die Vorlage klingt, geh weiter.</p>':'<p>Bei der Selbstbewertung gilt: lieber einmal zu streng.</p>')+
-    '<p>Dein Fortschritt bleibt auf diesem Gerät. Keine Werbung, kein Tracking.</p>'+(version?'<p>'+esc(versionText())+'</p>':'')+'</footer>';
+    '<p>'+(syncUser?'Dein Fortschritt liegt auf diesem Gerät und in deinem privaten Firebase-Speicher. Nur du kannst ihn lesen.':'Dein Fortschritt bleibt auf diesem Gerät.')+' Keine Werbung, kein Tracking.</p>'+(version?'<p>'+esc(versionText())+'</p>':'')+'</footer>';
   return h;
 }
 function sentHTML(it,marks){
@@ -741,7 +817,7 @@ document.addEventListener('click',function(e){
   else if(a==='prev') go(-1);
   else if(a==='again'){startSession(sess.title,sess.queue.filter(function(x){return !isDone(x);}));}
   else if(a==='again-all'){startSession(sess.title,sess.queue.slice());}
-  else if(a==='acc'){state.accent=v==='us'?'us':'gb';persist();render();}
+  else if(a==='acc'){state.accent=v==='us'?'us':'gb';persist('accent');render();}
   else if(a==='check'){stopAll();state.check=(v==='self'||v==='dict')?v:'auto';env.offMode=state.check==='auto'?'auto':'';persist();render();}
   else if(a==='offmode'){stopAll();env.offMode=(v==='self'||v==='dict')?v:'auto';render();}
   else if(a==='update') applyUpdate(true);
@@ -749,7 +825,10 @@ document.addEventListener('click',function(e){
   else if(a==='auto'){state.auto=v==='on';persist();render();}
   else if(a==='reset'){confirmReset=true;render();}
   else if(a==='reset-no'){confirmReset=false;render();}
-  else if(a==='reset-yes'){confirmReset=false;state.items={};persist();render();}
+  else if(a==='reset-yes'){confirmReset=false;state.items={};state.resetAt=Date.now();persist();render();}
+  else if(a==='sync-in') signIn();
+  else if(a==='sync-now'){if(sync)sync.now();}
+  else if(a==='sync-out'){if(sync)sync.signOut();}
   else if(a==='retry-mic'){env.micBlocked=false;env.denied=0;render();}
   else if(a==='own-save') saveOwn();
   else if(a==='copy-url') copyUrl();
@@ -792,4 +871,5 @@ loadLocal();
 draft=state.custom.text;
 render();
 swSetup();
-if(/mwtest/.test(location.hash)) window.__mw={mouth:mouth,compare:compare,judge:judge,PACKS:PACKS,allPacks:allPacks,env:env,splitSentences:splitSentences,getState:function(){return state;},upd:function(){return {waiting:!!waiting,later:updLater,reloading:reloading,view:view,draftSaved:draft===state.custom.text};}};
+try{if(syncOn()&&localStorage.getItem(SYNC)==='1') loadSync();}catch(e){}
+if(/mwtest/.test(location.hash)) window.__mw={mouth:mouth,compare:compare,judge:judge,PACKS:PACKS,allPacks:allPacks,env:env,splitSentences:splitSentences,getState:function(){return state;},upd:function(){return {waiting:!!waiting,later:updLater,reloading:reloading,view:view,draftSaved:draft===state.custom.text};},sync:function(){return {user:syncUser,stat:syncStat,code:syncCode,loaded:!!sync};}};
