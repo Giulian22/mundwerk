@@ -13,8 +13,9 @@ Du sprichst ein Wort, die Spracherkennung schreibt mit. Drei Treffer am Stück (
 | `css/app.css` | Design „Dunkel“ mit Neon-Grün, hell auf Wunsch (Einstellungen, Aussehen) |
 | `css/fonts.css`, `fonts/` | Schriften Space Grotesk, Inter und Charis SIL (Lautschrift), liegen im Projekt |
 | `js/data.js` | Alle Pakete, Wörter, Sätze, Lautschrift und Tipps |
-| `js/core.js` | Vergleich mit dem Gesprochenen, Spielstand |
+| `js/core.js` | Vergleich mit dem Gesprochenen, Spielstand, Tagesziel und Serie |
 | `js/app.js` | Bildschirm, Mikrofon, Vorlesen, Offline und Updates |
+| `js/fx.js` | Animationen, Übergänge, Konfetti, Töne und Vibration |
 | `js/sync.js`, `js/firebase-config.js` | Synchronisierung zwischen Geräten über Firebase |
 | `vendor/firebase.js` | Firebase-Bibliothek (App, Auth, Firestore Lite), gebaut mit `npm run build:firebase` |
 | `firestore.rules` | Sicherheitsregeln: Nur du liest und schreibst deine Daten |
@@ -22,6 +23,15 @@ Du sprichst ein Wort, die Spracherkennung schreibt mit. Drei Treffer am Stück (
 | `manifest.webmanifest`, `icons/` | Damit Mundwerk wie eine App auf den Home-Bildschirm kann. Icon: Schallwelle in Mundform (`icons/icon.svg`) |
 | `test/` | Automatische Prüfung (`npm test`) |
 | `tools/version.mjs` | Neue Version in `sw.js` eintragen (`npm run stamp`) |
+
+## Üben
+
+- **Tagesziel und Serie:** Jeder Versuch zählt fürs Tagesziel (10, 20 oder 40 pro Tag, einstellbar). Schaffst du es mehrere Tage hintereinander, wächst die Serie (Flamme oben rechts). Ist heute noch offen, reißt die Serie erst, wenn ein ganzer Tag ausfällt.
+- **Antippen:** Tipp auf das große Wort, um es zu hören. Bei Sätzen geht das mit jedem einzelnen Wort.
+- **Wischen:** Auf der Karte nach links wischen = weiter, nach rechts = zurück.
+- **Laptop:** Leertaste = Mikrofon, Pfeiltasten = blättern, A = anhören, L = langsam.
+- **Töne und Vibration:** leise Klänge bei Treffern, auf Android auch eine kurze Vibration. In den Einstellungen abschaltbar. Am iPhone schweigen sie im Lautlos-Modus.
+- **Animationen:** Steht im System „Bewegung reduzieren“, bleibt alles ruhig.
 
 ## Mikrofon
 
@@ -44,7 +54,7 @@ Nach jeder Änderung an App-Dateien `npm run stamp` ausführen. Das schreibt ein
 
 Nach der Anmeldung mit Google liegt der Fortschritt zusätzlich in einem privaten Firestore-Dokument (`users/{Nutzer-ID}`).
 - Ohne Anmeldung oder offline läuft alles lokal weiter. Sobald wieder Internet da ist, wird zusammengeführt: pro Eintrag gewinnt der neueste Versuch (`merge` in `js/core.js`). Zurücksetzen gilt auf allen Geräten.
-- Mit abgeglichen werden Fortschritt, Akzent und eigener Text. Prüfart und Vorsprechen bleiben pro Gerät.
+- Mit abgeglichen werden Fortschritt, Akzent, eigener Text, Tagesziel und die Versuche pro Tag (jedes Gerät zählt für sich, zusammen ergibt es die Summe). Prüfart, Vorsprechen, Aussehen und Töne bleiben pro Gerät.
 - `js/firebase-config.js` enthält die Kennung des Firebase-Projekts. Das ist kein Geheimnis, jede Firebase-Web-App zeigt sie im Browser. Die Daten schützen `firestore.rules` und die Google-Anmeldung.
 - Regeln testen: `npm run test:rules` (startet den Firebase-Emulator, braucht Java).
 
