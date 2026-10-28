@@ -1,0 +1,9 @@
+{
+  "name": "mundwerk",
+  "private": true,
+  "type": "module",
+  "description": "Englische Aussprache üben, bis sie sitzt.",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
