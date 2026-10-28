@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// Sicherheitsregeln für Mundwerk.
+// Jedes Google-Konto hat genau ein Dokument: users/{seine Nutzer-ID}.
+// Lesen und Schreiben darf nur, wer mit genau diesem Konto angemeldet ist.
+// Alles andere in der Datenbank ist gesperrt.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['state', 'updated'])
+        && request.resource.data.state is string
+        && request.resource.data.state.size() < 500000
+        && request.resource.data.updated is int;
+    }
+  }
+}
