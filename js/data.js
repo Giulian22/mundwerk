@@ -669,6 +669,13 @@ DATA.unshift(
   ['fal[se]','falls','falsch','fɔːls'],
   ['nie[ce]','knees','Nichte','niːs'],
   ['knee[s]','niece','Knie','niːz'],
+  ['[s]aid','zed','sagte','sed','Scharfes s wie in Messer: sed.'],
+  ['pea[ce]','peas','Frieden','piːs','Scharfes Ende wie in Fass: piis.'],
+  ['hi[s]','hiss','sein','hɪz','Das Ende summt wie das s in Rose.'],
+  ['grow[s]','gross','wächst','ɡrəʊz~ɡroʊz','Vokal lang ziehen, das Ende summt.'],
+  ['pay[s]','pace','zahlt','peɪz','Vokal lang ziehen, das Ende summt: päis mit z.'],
+  ['[s]ei[z]e','cease','ergreifen','siːz','Vorn scharf, hinten summend.'],
+  ['de[ss]ert','desert','Nachtisch','dɪˈzɜːt~dɪˈzɝːt','Trotz ss summt es: di-SÖÖT. Betonung hinten.'],
   ['becau[se]','','weil','bɪˈkɒz~bɪˈkɔːz','Am Ende summt es: z.'],
   ['plea[se]','','bitte','pliːz','Am Ende summt es: z.'],
   ['ea[s]y','','einfach','ˈiːzi','In der Mitte summt es: z.'],
@@ -682,7 +689,14 @@ DATA.unshift(
   ['al[s]o','','auch','ˈɔːlsəʊ~ˈɔːlsoʊ','Scharfes s, anders als im deutschen also.'],
   ['ba[s]ic','','grundlegend','ˈbeɪsɪk','Scharfes s, kein z.'],
   ['hou[se]','','Haus','haʊs','Am Ende scharfes s.'],
-  ['cri[s]i[s]','','Krise','ˈkraɪsɪs','Beide s scharf.']
+  ['cri[s]i[s]','','Krise','ˈkraɪsɪs','Beide s scharf.'],
+  ['[S]aturday','','Samstag','ˈsætədeɪ~ˈsætərdeɪ','Am Wortanfang immer scharf: SÄ-te-däi.'],
+  ['[s]ummer','','Sommer','ˈsʌmə~ˈsʌmər','Am Wortanfang immer scharf.'],
+  ['wa[s]','','war','wɒz~wʌz','Das Ende summt. Und das w mit runden Lippen.'],
+  ['alway[s]','','immer','ˈɔːlweɪz','Am Ende summt es: z.'],
+  ['Tue[s]day','','Dienstag','ˈtjuːzdeɪ~ˈtuːzdeɪ','In der Mitte summt es: TJUUS-däi.~In der Mitte summt es: TUUS-däi.'],
+  ['po[ss]e[ss]','','besitzen','pəˈzes','Erstes ss summt, zweites zischt: pe-SES.'],
+  ['[s]ci[ss]or[s]','','Schere','ˈsɪzəz~ˈsɪzərz','Vorn scharf, dann zweimal summend: SSI-ses.']
  ],
  s:[
   '[S]even [s]isters [s]ang the [s]ame [s]ong.',
@@ -690,7 +704,10 @@ DATA.unshift(
   'The pri[ce] of ri[ce] i[s] on the ri[se].',
   'Plea[se] choo[se] an ea[s]y [s]ong for the mu[s]ic cla[ss].',
   'The bu[s] wa[s] bu[s]y, [s]o we lo[s]t our [s]eats.',
-  'Loo[se] change i[s] ea[s]y to lo[se].'
+  'Loo[se] change i[s] ea[s]y to lo[se].',
+  'Hi[s] [s]i[s]ter [s]ay[s] the [s]alad i[s] ea[s]y.',
+  'Thi[s] new[s] wa[s] a big [s]urpri[s]e.',
+  'The pri[ce] of pea[ce] i[s] alway[s] high.'
  ]},
 
 {id:'zts',g:'s',sym:'z',name:'z ist kein ts',sub:'zoo beginnt wie Sonne',
@@ -719,6 +736,17 @@ DATA.unshift(
   ['ja[zz]','','Jazz','dʒæz','Vorn dsch, hinten summend.'],
   ['free[ze]','','frieren','friːz'],
   ['bree[ze]','','Brise','briːz'],
+  ['[z]ombie','','Zombie','ˈzɒmbi~ˈzɑːmbi','Summendes s, kein ts: SOM-bi.~Summendes s, kein ts: SAAM-bi.'],
+  ['New [Z]ealand','','Neuseeland','njuː ˈziːlənd~nuː ˈziːlənd','ZII-lend, mit summendem s wie in Neuseeland.'],
+  ['Bra[z]il','','Brasilien','brəˈzɪl','bre-SIL, summendes s, Betonung hinten.'],
+  ['o[z]one','','Ozon','ˈəʊzəʊn~ˈoʊzoʊn','OU-soun, kein ts.'],
+  ['bla[z]er','','Blazer, Sakko','ˈbleɪzə~ˈbleɪzər','BLÄI-se, summendes s.'],
+  ['ha[z]ard','','Gefahr','ˈhæzəd~ˈhæzərd','HÄ-sed, summendes s.'],
+  ['bi[z]arre','','seltsam, bizarr','bɪˈzɑː~bɪˈzɑːr','bi-SAA, kein bi-tsar.'],
+  ['wi[z]ard','','Zauberer','ˈwɪzəd~ˈwɪzərd','WI-sed: Lippen rund für das w, das s summt.'],
+  ['li[z]ard','','Eidechse','ˈlɪzəd~ˈlɪzərd','LI-sed, summendes s.'],
+  ['apologi[z]e','','sich entschuldigen','əˈpɒlədʒaɪz~əˈpɑːlədʒaɪz','e-POL-e-dschais, das Ende summt.'],
+  ['recogni[z]e','','wiedererkennen','ˈrekəɡnaɪz','RE-keg-nais, das Ende summt.'],
   ['pi[zz]a','','Pizza','ˈpiːtsə','Die Ausnahme: hier wirklich ts.']
  ],
  s:[
@@ -726,12 +754,14 @@ DATA.unshift(
   'A la[z]y li[z]ard is fro[z]en in the free[z]er.',
   'The si[z]e of the pri[z]e is ama[z]ing.',
   'A do[z]en citi[z]ens organi[z]ed a qui[z].',
-  '[Z]oom in on the hori[z]on.'
+  '[Z]oom in on the hori[z]on.',
+  'The [z]ombie in the bla[z]er looks bi[z]arre.',
+  'Fro[z]en roads are a ha[z]ard in New [Z]ealand.'
  ]},
 
 {id:'ssh',g:'s',sym:'s ʃ',name:'s gegen sh',sub:'see ist nicht she',
  fix:'s: Lippen breit, Zunge vorn. sh: Lippen rund nach vorn, Zunge ein Stück zurück.',
- tip:'Bei s sind die Lippen breit und die Zungenspitze liegt vorn hinter den Zähnen. Bei sh gehen die Lippen rund nach vorn und die Zunge zieht sich zurück, der Laut klingt dunkler. Tückisch ist die Schreibung: sh steckt auch in sure, sugar, machine, special, nation und ocean.',
+ tip:'Bei s sind die Lippen breit und die Zungenspitze liegt vorn hinter den Zähnen. Bei sh gehen die Lippen rund nach vorn und die Zunge zieht sich zurück, der Laut klingt dunkler. Tückisch ist die Schreibung: sh steckt auch in sure, sugar, machine, special, nation und ocean. Auch vor m, l, n und w bleibt es ein scharfes s: small, slow, snow, swim. Kein schmall, kein schwim.',
  mouths:[['s','s: Lippen breit, Zähne fast zu'],['round','sh: Lippen rund nach vorn']],
  w:[
   ['[s]ee','she','sehen','siː'],
@@ -750,6 +780,12 @@ DATA.unshift(
   ['[sh]oe','sue','Schuh','ʃuː'],
   ['ma[ss]','mash','Masse','mæs'],
   ['cla[ss]','clash','Klasse','klɑːs~klæs'],
+  ['[sh]elf','self','Regal','ʃelf','Lippen rund nach vorn, Zunge ein Stück zurück.'],
+  ['[s]uit','shoot','Anzug','suːt','Lippen breit, Zungenspitze vorn hinter den Zähnen.'],
+  ['[sh]ore','sore','Ufer, Küste','ʃɔː~ʃɔːr','Lippen rund nach vorn: dunkles sch.'],
+  ['[sh]y','sigh','schüchtern','ʃaɪ','Lippen rund nach vorn: schai.'],
+  ['[sh]ake','sake','schütteln','ʃeɪk','Lippen rund nach vorn: schäik.'],
+  ['cra[sh]','crass','Unfall, Absturz','kræʃ','Am Ende Lippen rund: kräsch.'],
   ['[s]ure','','sicher','ʃɔː~ʃʊr','Geschrieben s, gesprochen sh.'],
   ['[s]ugar','','Zucker','ˈʃʊɡə~ˈʃʊɡər','Geschrieben s, gesprochen sh.'],
   ['ma[ch]ine','','Maschine','məˈʃiːn','ch klingt hier wie sh.'],
@@ -763,7 +799,15 @@ DATA.unshift(
   ['effi[ci]ent','','effizient','ɪˈfɪʃnt','i-FI-schnt.'],
   ['pa[ti]ent','','Patient, geduldig','ˈpeɪʃnt','PÄI-schnt.'],
   ['finan[ci]al','','finanziell','faɪˈnænʃl','fai-NÄN-schl.'],
-  ['deli[ci]ous','','lecker','dɪˈlɪʃəs','di-LI-sches.']
+  ['deli[ci]ous','','lecker','dɪˈlɪʃəs','di-LI-sches.'],
+  ['[s]mall','','klein','smɔːl','Scharfes s, kein schm wie in schmal.'],
+  ['[s]low','','langsam','sləʊ~sloʊ','Scharfes s, kein schl.'],
+  ['[s]now','','Schnee','snəʊ~snoʊ','Scharfes s, kein schn.'],
+  ['[s]wim','','schwimmen','swɪm','Scharfes s, dann w mit runden Lippen. Kein schw.'],
+  ['in[s]urance','','Versicherung','ɪnˈʃʊərəns~ɪnˈʃʊrəns','Geschrieben s, gesprochen sh: in-SCHUE-rens.'],
+  ['an[c]ient','','uralt, antik','ˈeɪnʃənt','c klingt hier wie sh: ÄIN-schent.'],
+  ['pa[ss]ion','','Leidenschaft','ˈpæʃn','ss klingt hier wie sh: PÄ-schn.'],
+  ['[s]e[ss]ion','','Sitzung','ˈseʃn','Vorn scharfes s, dann sh: SE-schn.']
  ],
  s:[
   '[Sh]e [s]aw a [sh]ip on the [s]ea.',
@@ -771,7 +815,10 @@ DATA.unshift(
   'I am [s]ure the [s]ugar is on the [sh]elf.',
   '[S]ix [sh]ort [sh]ips [s]ail [s]outh.',
   'A [s]pe[ci]al ma[ch]ine [s]orts the [sh]eets.',
-  'The na[ti]on\'s finan[ci]al [s]itua[ti]on is an i[ss]ue.'
+  'The na[ti]on\'s finan[ci]al [s]itua[ti]on is an i[ss]ue.',
+  '[Sh]e put [s]ix [s]mall [sh]ells on the [sh]elf.',
+  'We [s]wam [s]lowly back to the [sh]ore.',
+  'The in[s]urance [s]e[ss]ion was a [sh]ock.'
  ]},
 
 {id:'st',g:'s',sym:'st',name:'st und sp ohne sch',sub:'street, nicht schtreet',
@@ -807,7 +854,19 @@ DATA.unshift(
   ['te[st]','','Test','test'],
   ['indu[st]ry','','Industrie','ˈɪndəstri','IN-des-tri, Betonung vorn.'],
   ['hi[st]ory','','Geschichte','ˈhɪstri~ˈhɪstəri'],
-  ['sugge[st]ion','','Vorschlag','səˈdʒestʃən']
+  ['sugge[st]ion','','Vorschlag','səˈdʒestʃən'],
+  ['[st]ay','','bleiben','steɪ','Kein scht: s-täi.'],
+  ['[st]ep','','Schritt','step','Kein scht: s-tep.'],
+  ['[st]age','','Bühne','steɪdʒ','Kein scht: s-täidsch.'],
+  ['[st]atement','','Aussage','ˈsteɪtmənt','Kein scht: STÄIT-ment.'],
+  ['[sp]ell','','buchstabieren','spel','Kein schp: s-pel.'],
+  ['[sp]ider','','Spinne','ˈspaɪdə~ˈspaɪdər','Kein schp: SPAI-de.'],
+  ['[sp]lit','','teilen','splɪt','Kein schp: s-plit.'],
+  ['[sp]eech','','Rede','spiːtʃ','Kein schp: s-piitsch.'],
+  ['re[sp]ect','','Respekt','rɪˈspekt','Auch in der Mitte kein schp: ri-SPEKT.'],
+  ['in[st]ead','','stattdessen','ɪnˈsted','Auch in der Mitte kein scht: in-STED.'],
+  ['mi[st]ake','','Fehler','mɪˈsteɪk','Kein scht: mi-STÄIK.'],
+  ['fa[st]','','schnell','fɑːst~fæst','Auch am Ende kein scht.']
  ],
  s:[
   'The [st]udent [st]ill [st]ands in the [st]reet.',
@@ -815,7 +874,9 @@ DATA.unshift(
   'The be[st] [st]ory [st]arts at the la[st] [st]ation.',
   'Fir[st] we [st]op, then we te[st] the [sp]eed.',
   'A [st]rong indu[st]ry needs a [st]able [st]ate.',
-  '[St]ress is [st]ill the bigge[st] co[st].'
+  '[St]ress is [st]ill the bigge[st] co[st].',
+  'In my [sp]eech I [st]ep onto the [st]age.',
+  'Fa[st] [sp]eakers often make mi[st]akes.'
  ]},
 
 {id:'cs',g:'s',sym:'c',name:'c: mal s, mal k',sub:'city mit s, cat mit k',
@@ -854,7 +915,18 @@ DATA.unshift(
   ['a[cc]ount','','Konto','əˈkaʊnt','Vor o bleibt cc ein k.'],
   ['[c]ustom','','Brauch','ˈkʌstəm','Vor u ist c ein k.'],
   ['[c]ertifi[c]ate','','Zertifikat','səˈtɪfɪkət~sərˈtɪfɪkət','Erstes c wie s, zweites wie k.'],
-  ['[c]ir[c]umstan[c]es','','Umstände','ˈsɜːkəmstənsɪz~ˈsɝːkəmstænsɪz','Der Reihe nach: s, k, s.']
+  ['[c]ir[c]umstan[c]es','','Umstände','ˈsɜːkəmstənsɪz~ˈsɝːkəmstænsɪz','Der Reihe nach: s, k, s.'],
+  ['[c]ell','','Zelle, Handy','sel','Scharfes s, kein ts wie in Zelle.'],
+  ['[c]entury','','Jahrhundert','ˈsentʃəri','SEN-tsche-ri, vorn kein ts.'],
+  ['[c]ivil','','bürgerlich, zivil','ˈsɪvl','SI-wl, kein ts wie in zivil.'],
+  ['[c]ir[c]us','','Zirkus','ˈsɜːkəs~ˈsɝːkəs','Erstes c wie s, zweites wie k: SÖÖ-kes.'],
+  ['[c]ylinder','','Zylinder','ˈsɪlɪndə~ˈsɪlɪndər','SI-lin-de, kein ts wie in Zylinder.'],
+  ['pen[c]il','','Bleistift','ˈpensl','PEN-sl, scharfes s.'],
+  ['so[c]iety','','Gesellschaft','səˈsaɪəti','c vor i: scharfes s. se-SSAI-e-ti.'],
+  ['ne[c]e[ss]ary','','nötig','ˈnesəsəri~ˈnesəseri','c und ss, alles scharf: NE-se-se-ri.'],
+  ['a[cc]ent','','Akzent','ˈæksənt~ˈæksent','cc sind zwei Laute, k und s: ÄK-sent. Kein ts.'],
+  ['su[cc]eed','','Erfolg haben','səkˈsiːd','cc sind zwei Laute, k und s: sek-SIID.'],
+  ['di[sc]ipline','','Disziplin','ˈdɪsəplɪn','sc ist hier nur ein s: DI-se-plin. Kein ts.']
  ],
  s:[
   'The [c]ity [c]entre has a new [c]inema.',
@@ -862,7 +934,9 @@ DATA.unshift(
   'Su[cc]ess in [sc]ience needs con[c]entration.',
   'We noti[c]ed a differen[c]e in the pro[c]ess.',
   'The agen[c]y re[c]eived the [c]ertifi[c]ate in De[c]ember.',
-  'Exer[c]ise is good medi[c]ine.'
+  'Exer[c]ise is good medi[c]ine.',
+  'The [c]ir[c]us came to the [c]ity [c]entre.',
+  'Su[cc]ess needs di[sc]ipline, not a perfect a[cc]ent.'
  ]},
 
 {id:'ch',g:'s',sym:'ch',name:'ch: tsch, k oder sh',sub:'chair, chemistry, machine',
@@ -876,6 +950,8 @@ DATA.unshift(
   ['wa[tch]','wash','Uhr, schauen','wɒtʃ~wɑːtʃ'],
   ['ca[tch]','cash','fangen','kætʃ'],
   ['whi[ch]','wish','welche','wɪtʃ'],
+  ['[ch]op','shop','hacken','tʃɒp~tʃɑːp','Kurzes t vor dem sch: tschop.'],
+  ['ma[tch]','mash','Spiel, Streichholz','mætʃ','Am Ende tsch, mit kurzem t: mätsch.'],
   ['[ch]allenge','','Herausforderung','ˈtʃælɪndʒ'],
   ['[ch]apter','','Kapitel','ˈtʃæptə~ˈtʃæptər'],
   ['[ch]oice','','Wahl','tʃɔɪs'],
@@ -894,14 +970,24 @@ DATA.unshift(
   ['[ch]ef','','Koch','ʃef','ch wie sh.'],
   ['bro[ch]ure','','Broschüre','ˈbrəʊʃə~broʊˈʃʊr','ch wie sh.'],
   ['[ch]ampagne','','Champagner','ʃæmˈpeɪn','ch wie sh, g stumm.'],
-  ['[Ch]icago','','Chicago','ʃɪˈkɑːɡəʊ~ʃɪˈkɑːɡoʊ','ch wie sh.']
+  ['[Ch]icago','','Chicago','ʃɪˈkɑːɡəʊ~ʃɪˈkɑːɡoʊ','ch wie sh.'],
+  ['[ch]ance','','Chance','tʃɑːns~tʃæns','tsch, nicht sch wie im deutschen Chance.'],
+  ['[Ch]ina','','China','ˈtʃaɪnə','TSCHAI-ne, nicht chi wie im Deutschen.'],
+  ['[ch]ildren','','Kinder','ˈtʃɪldrən','tsch, dann kurzes i: TSCHIL-dren.'],
+  ['[ch]ur[ch]','','Kirche','tʃɜːtʃ~tʃɝːtʃ','Zweimal tsch: tschöötsch.'],
+  ['ki[tch]en','','Küche','ˈkɪtʃɪn','tch klingt wie tsch: KI-tschin.'],
+  ['a[ch]e','','Schmerz','eɪk','ch wie k: äik, wie in headache.'],
+  ['[ch]orus','','Refrain, Chor','ˈkɔːrəs','ch wie k: KOO-res.'],
+  ['para[ch]ute','','Fallschirm','ˈpærəʃuːt','ch wie sh: PÄ-re-schuut.']
  ],
  s:[
   'The [ch]ef [ch]ose a [ch]eap [ch]air.',
   'Whi[ch] [ch]apter is about [ch]emistry?',
   'Our s[ch]ool tea[ch]es te[ch]nology and [ch]emistry.',
   'The me[ch]anic wa[tch]ed the ma[ch]ine.',
-  'The ar[ch]itect has a strong [ch]aracter.'
+  'The ar[ch]itect has a strong [ch]aracter.',
+  'Give me a [ch]ance to wa[tch] the ma[tch].',
+  'The [ch]ef in the ki[tch]en has a [ch]ronic a[ch]e.'
  ]},
 
 {id:'es',g:'s',sym:'-s',name:'Endung -s',sub:'books, dogs, prices',
@@ -911,6 +997,11 @@ DATA.unshift(
   ['dog[s]','docks','Hunde','dɒɡz~dɔːɡz','Endung summt: z.'],
   ['bag[s]','backs','Taschen','bæɡz','Endung summt: z.'],
   ['pen[s]','pence','Stifte','penz','Endung summt: z.'],
+  ['bed[s]','bets','Betten','bedz','Vokal etwas länger, die Endung summt: z.'],
+  ['card[s]','carts','Karten','kɑːdz~kɑːrdz','Vokal etwas länger, die Endung summt: z.'],
+  ['lab[s]','laps','Labore','læbz','Vokal etwas länger, die Endung summt: z.'],
+  ['bug[s]','bucks','Käfer, Fehler','bʌɡz','Vokal etwas länger, die Endung summt: z.'],
+  ['seed[s]','seats','Samen','siːdz','Vokal etwas länger, die Endung summt: z.'],
   ['day[s]','','Tage','deɪz','Endung summt: z.'],
   ['car[s]','','Autos','kɑːz~kɑːrz','Endung summt: z.'],
   ['problem[s]','','Probleme','ˈprɒbləmz~ˈprɑːbləmz','Endung summt: z.'],
@@ -935,7 +1026,14 @@ DATA.unshift(
   ['watch[es]','','Uhren, schaut','ˈwɒtʃɪz~ˈwɑːtʃɪz','Eigene Silbe: iz.'],
   ['advantag[es]','','Vorteile','ədˈvɑːntɪdʒɪz~ədˈvæntɪdʒɪz','Eigene Silbe: iz.'],
   ['business[es]','','Unternehmen','ˈbɪznəsɪz','BIS-ne-sis, drei Silben.'],
-  ['hous[es]','','Häuser','ˈhaʊzɪz','Im Plural summt auch das erste s.']
+  ['hous[es]','','Häuser','ˈhaʊzɪz','Im Plural summt auch das erste s.'],
+  ['friend[s]','','Freunde','frendz','Endung summt: frends mit z.'],
+  ['idea[s]','','Ideen','aɪˈdɪəz~aɪˈdiːəz','Endung summt: z.'],
+  ['grade[s]','','Noten','ɡreɪdz','Endung summt: z.'],
+  ['parent[s]','','Eltern','ˈpeərənts~ˈperənts','Scharfes s nach t: PÄE-rents.~Scharfes s nach t: PE-rents.'],
+  ['sport[s]','','Sportarten','spɔːts~spɔːrts','Scharfes s nach t. Vorn kein schp.'],
+  ['sentenc[es]','','Sätze','ˈsentənsɪz','Eigene Silbe: iz. SEN-ten-sis.'],
+  ['pag[es]','','Seiten','ˈpeɪdʒɪz','Eigene Silbe: iz. PÄI-dschis.']
  ],
  s:[
   'The dog[s] chase the cat[s] past the hous[es].',
@@ -943,7 +1041,9 @@ DATA.unshift(
   'Pric[es] rise when cost[s] and tax[es] go up.',
   'He ask[s] question[s] in all his class[es].',
   'Big business[es] offer product[s] and servic[es].',
-  'The test[s] show the risk[s] of these chang[es].'
+  'The test[s] show the risk[s] of these chang[es].',
+  'My friend[s] have great idea[s] and good grade[s].',
+  'These pag[es] are full of long sentenc[es].'
  ]},
 
 {id:'x',g:'s',sym:'x',name:'x: ks oder gs',sub:'next mit ks, exam mit gs',
@@ -971,13 +1071,23 @@ DATA.unshift(
   ['e[x]ist','','existieren','ɪɡˈzɪst','Weich: gs.'],
   ['e[x]hausted','','erschöpft','ɪɡˈzɔːstɪd','Weich: gs. Das h ist stumm.'],
   ['e[x]aggerate','','übertreiben','ɪɡˈzædʒəreɪt','Weich: gs.'],
-  ['an[x]ious','','besorgt','ˈæŋkʃəs','ÄNK-sches.']
+  ['an[x]ious','','besorgt','ˈæŋkʃəs','ÄNK-sches.'],
+  ['fi[x]','','reparieren','fɪks','Hart: fiks.'],
+  ['rela[x]','','entspannen','rɪˈlæks','Hart am Ende: ri-LÄKS.'],
+  ['ta[x]i','','Taxi','ˈtæksi','Hart: TÄK-si.'],
+  ['e[x]treme','','extrem','ɪkˈstriːm','Hart: iks-TRIIM.'],
+  ['an[x]iety','','Angst','æŋˈzaɪəti','Weich: äng-SAI-e-ti. Aber anxious ist hart.'],
+  ['e[x]hibit','','ausstellen, Ausstellungsstück','ɪɡˈzɪbɪt','Weich: ig-SI-bit. Aber exhibition ist hart.'],
+  ['e[x]otic','','exotisch','ɪɡˈzɒtɪk~ɪɡˈzɑːtɪk','Weich: ig-SO-tik.~Weich: ig-SAA-tik.'],
+  ['e[x]amine','','untersuchen','ɪɡˈzæmɪn','Weich: ig-SÄ-min.']
  ],
  s:[
   'The ne[x]t e[x]am is e[x]tra hard.',
   'For e[x]ample, ta[x]es are e[x]pensive.',
   'An e[x]pert e[x]plained the e[x]act conte[x]t.',
-  'Si[x] bo[x]es e[x]ist in the e[x]hibition.'
+  'Si[x] bo[x]es e[x]ist in the e[x]hibition.',
+  'Rela[x], the ta[x]i is ne[x]t to the e[x]it.',
+  'The e[x]hibit of e[x]otic plants is e[x]tremely popular.'
  ]},
 
 {id:'sth',g:'s',sym:'s θ',name:'s trifft th',sub:'this thing, sixth, months',
@@ -996,6 +1106,9 @@ DATA.unshift(
   ['[th]umb','sum','Daumen','θʌm','Das b ist stumm.'],
   ['fai[th]','face','Glaube','feɪθ'],
   ['ten[th]','tense','zehnte','tenθ'],
+  ['[th]eme','seem','Thema, Motiv','θiːm','Zunge zwischen die Zähne, kein t wie in Thema.'],
+  ['tru[th]','truce','Wahrheit','truːθ','Am Ende Zungenspitze zwischen die Zähne.'],
+  ['you[th]','use','Jugend','juːθ','Am Ende Zungenspitze zwischen die Zähne: juuth.'],
   ['mon[ths]','','Monate','mʌnθs'],
   ['ba[ths]','','Bäder','bɑːθs~bæθs'],
   ['dea[ths]','','Todesfälle','deθs'],
@@ -1009,7 +1122,14 @@ DATA.unshift(
   ['en[th]u[s]iasm','','Begeisterung','ɪnˈθjuːziæzəm~ɪnˈθuːziæzəm','Betonung auf der zweiten Silbe.'],
   ['[th]ou[s]ands','','Tausende','ˈθaʊzndz'],
   ['au[th]or[s]','','Autoren','ˈɔːθəz~ˈɔːθərz'],
-  ['me[th]od[s]','','Methoden','ˈmeθədz']
+  ['me[th]od[s]','','Methoden','ˈmeθədz'],
+  ['[th]ird','','dritte','θɜːd~θɝːd','Zunge vor: thööd, kein s und kein t.'],
+  ['[th]ir[s]ty','','durstig','ˈθɜːsti~ˈθɝːsti','Vorn Zunge vor, hinten scharfes s: THÖÖS-ti.'],
+  ['ma[th]ematic[s]','','Mathematik','ˌmæθəˈmætɪks','Zunge vor, kein t: mä-the-MÄ-tiks.'],
+  ['hypo[th]e[s]i[s]','','Hypothese','haɪˈpɒθəsɪs~haɪˈpɑːθəsɪs','Zunge vor, dann zweimal scharfes s: hai-PO-the-sis.~Zunge vor, dann zweimal scharfes s: hai-PAA-the-sis.'],
+  ['[s]yn[th]e[s]i[s]','','Synthese','ˈsɪnθəsɪs','s, dann th, dann s: SIN-the-sis.'],
+  ['ae[sth]etic','','ästhetisch','iːsˈθetɪk~esˈθetɪk','s und th direkt hintereinander: iis-THE-tik.~s und th direkt hintereinander: es-THE-tik.'],
+  ['[s]ou[th]ea[st]','','Südosten','ˌsaʊθˈiːst','s, th, dann st: sauth-IIST.']
  ],
  s:[
   'I[s] [th]i[s] [th]e [s]ix[th] mon[th]?',
@@ -1017,7 +1137,9 @@ DATA.unshift(
   'Bo[th] [s]ide[s] [th]ink [th]e [s]ame [th]ing.',
   'It i[s] [th]e [th]ought [th]at count[s].',
   '[S]he [s]ay[s] [th]at [th]e [s]ou[th] i[s] warm.',
-  '[Th]e[s]e [th]ree [s]tudent[s] pa[ss]ed [th]eir te[s]t[s].'
+  '[Th]e[s]e [th]ree [s]tudent[s] pa[ss]ed [th]eir te[s]t[s].',
+  'Tell me the tru[th] about [th]i[s] hypo[th]e[s]i[s].',
+  '[Th]e [th]ird [th]eme i[s] [s]ome[th]ing [s]pecial.'
  ]}
 );
 
@@ -1025,5 +1147,6 @@ HOMO.push(
  ['sink','sync','synch'],['place','plaice'],['raise','rays','raze'],['phase','faze'],['please','pleas'],
  ['size','sighs'],['freeze','frees','frieze'],['see','c'],['sign','sine'],['shoe','shoo'],['sure','shore'],
  ['cheap','cheep'],['choose','chews'],['cash','cache'],['muscle','mussel'],['accept','except'],['tax','tacks'],
- ['sue','sioux','su'],['bus','buss'],['mass','mas']
+ ['sue','sioux','su'],['bus','buss'],['mass','mas'],
+ ['sees','seize','seas'],['apologise','apologize'],['recognise','recognize'],['aesthetic','esthetic'],['bizarre','bazaar']
 );
